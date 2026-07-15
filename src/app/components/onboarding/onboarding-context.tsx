@@ -14,7 +14,6 @@ export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
 interface OnboardingData {
   email: string;
   password: string;
-  confirmPassword: string;
 
   churchName: string;
   country: string;
@@ -29,7 +28,6 @@ interface OnboardingData {
 const DEFAULT_ONBOARDING_DATA: OnboardingData = {
   email: "",
   password: "",
-  confirmPassword: "",
 
   churchName: "",
   country: "Ghana",

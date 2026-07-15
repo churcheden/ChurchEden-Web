@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import {
   Home, Users, Calendar, Megaphone,
   DollarSign, BarChart2, Receipt,
   QrCode, ClipboardList, Settings,
-  UserCog, ChevronRight, X, Bird,
+  UserCog, X, Bird, LogOut,
 } from "lucide-react";
+import { useAuth } from "@/app/auth/auth-context";
 
 interface NavItem {
   icon: React.ElementType;
@@ -58,13 +60,29 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProps) {
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
   const [internalActive, setInternalActive] = useState("Overview");
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const activeItem = activePage ?? internalActive;
 
   const handleNav = (label: string) => {
     setInternalActive(label);
     onNavigate?.(label);
     onClose();
+  };
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      await signOut();
+      navigate("/onboarding/sign-in", { replace: true });
+    } catch {
+      navigate("/onboarding/sign-in", { replace: true });
+    } finally {
+      setIsSigningOut(false);
+      onClose();
+    }
   };
 
   return (
@@ -156,29 +174,18 @@ export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProp
           ))}
         </nav>
 
-        {/* Upgrade card */}
-        <div
-          className="mx-3 mb-4 rounded-2xl p-4"
-          style={{ background: "rgba(200,134,10,0.07)", border: "1px solid rgba(200,134,10,0.18)" }}
-        >
-          <div className="flex items-center gap-2.5 mb-3">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #1A0533 0%, #2D1B69 100%)" }}
-            >
-              <span style={{ fontSize: "12px", fontWeight: 700, color: "#C8860A", fontFamily: "var(--font-label)" }}>PE</span>
-            </div>
-            <div>
-              <div style={{ fontSize: "12px", fontWeight: 600, color: "#1A1A2E", fontFamily: "var(--font-label)" }}>Unlock all features</div>
-              <div style={{ fontSize: "11px", color: "#6B7280", fontFamily: "var(--font-label)" }}>30+ integrations</div>
-            </div>
-          </div>
+        <div className="px-3 pb-4">
           <button
-            className="w-full py-2 rounded-full flex items-center justify-center gap-1 transition-all hover:opacity-90 active:scale-95"
-            style={{ background: "#C8860A" }}
+            type="button"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl transition-all duration-200 hover:opacity-90 active:scale-95 disabled:opacity-60"
+            style={{ background: "#1A1A2E" }}
           >
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "#FFFFFF", fontFamily: "var(--font-label)" }}>15 day free trial</span>
-            <ChevronRight size={12} color="#FFFFFF" />
+            <LogOut size={15} color="#C8860A" />
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#FFFFFF", fontFamily: "var(--font-label)" }}>
+              {isSigningOut ? "Signing out..." : "Sign out"}
+            </span>
           </button>
         </div>
       </aside>
