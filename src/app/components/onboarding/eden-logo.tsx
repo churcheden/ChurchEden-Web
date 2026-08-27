@@ -1,21 +1,24 @@
-import { Bird } from "lucide-react";
 import { cn } from "../ui/utils";
+import churchedenFavicon from "@/assets/churcheden_favicon.png";
 
 interface EdenLogoProps {
   className?: string;
+  imgClassName?: string;
   iconClassName?: string;
   textClassName?: string;
 }
 
 /**
- * Shared brand lockup for the Landing Page and Onboarding shell: a plain
- * line-art icon beside the wordmark, no colored badge container — matching
- * the reference layout provided (icon + bold wordmark, no icon background).
+ * Shared brand lockup for ChurchEden onboarding and auth flows.
  */
-export function EdenLogo({ className, iconClassName, textClassName }: EdenLogoProps) {
+export function EdenLogo({ className, imgClassName, textClassName }: EdenLogoProps) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <Bird className={cn("text-white", iconClassName)} size={26} strokeWidth={1.75} />
+      <img
+        src={churchedenFavicon}
+        alt="ChurchEden"
+        className={cn("h-8 w-8 sm:h-9 sm:w-9 object-contain", imgClassName)}
+      />
       <span className={cn("font-eden text-xl font-bold tracking-tight text-white", textClassName)}>
         ChurchEden
       </span>

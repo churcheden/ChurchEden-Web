@@ -4,9 +4,10 @@ import {
   Home, Users, Calendar, Megaphone,
   DollarSign, BarChart2, Receipt,
   QrCode, ClipboardList, Settings,
-  UserCog, X, Bird, LogOut,
+  UserCog, X, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-context";
+import churchedenFavicon from "@/assets/churcheden_favicon.png";
 
 interface NavItem {
   icon: React.ElementType;
@@ -106,7 +107,7 @@ export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProp
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 pt-6 pb-5">
-          <Bird size={24} color="#C9931A" strokeWidth={1.8} />
+          <img src={churchedenFavicon} alt="ChurchEden" className="h-7 w-7 object-contain" />
           <span style={{ fontFamily: "var(--font-heading)", fontSize: "20px", fontWeight: 700, color: "#1A1A2E" }}>
             ChurchEden
           </span>

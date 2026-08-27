@@ -31,15 +31,15 @@ const FEATURES = [
 /**
  * Two-column "Everything your church needs" section.
  * Left: heading + 3 feature rows.
- * Right: Mocked product dashboard card.
+ * Right: High-resolution product dashboard showcase screenshot.
  */
 export function LandingFeatures() {
   return (
-    <section className="bg-white py-20 lg:py-28">
+    <section className="bg-white pt-10 pb-16 lg:pt-14 lg:pb-24">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="grid items-start gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="grid items-center gap-12 lg:grid-cols-12 lg:gap-14">
           {/* LEFT: heading + feature list */}
-          <div>
+          <div className="lg:col-span-5">
             <motion.h2
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -73,9 +73,9 @@ export function LandingFeatures() {
                   className="flex items-start gap-4"
                 >
                   <div
-                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconBg}`}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${iconBg} shadow-sm`}
                   >
-                    <Icon size={20} className={iconColor} />
+                    <Icon size={22} className={iconColor} />
                   </div>
                   <div>
                     <h3 className="mb-1 text-base font-bold text-[#0F172A]">
@@ -88,19 +88,21 @@ export function LandingFeatures() {
             </div>
           </div>
 
-          {/* RIGHT: Real dashboard screenshot */}
+          {/* RIGHT: Real dashboard screenshot — enlarged width and length showcase */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="overflow-hidden rounded-2xl shadow-2xl shadow-slate-900/10 ring-1 ring-slate-200"
+            className="overflow-hidden rounded-3xl bg-slate-900/5 p-2 shadow-2xl shadow-slate-900/15 ring-1 ring-slate-200 lg:col-span-7"
           >
-            <img
-              src={dashboardImg}
-              alt="ChurchEden Dashboard"
-              className="w-full object-cover"
-            />
+            <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+              <img
+                src={dashboardImg}
+                alt="ChurchEden Dashboard"
+                className="w-full h-auto object-cover transition-transform duration-500 hover:scale-[1.01]"
+              />
+            </div>
           </motion.div>
         </div>
       </div>

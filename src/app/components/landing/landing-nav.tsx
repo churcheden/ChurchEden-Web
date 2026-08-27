@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
-import { Bird, ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "../ui/utils";
+import churchedenFavicon from "@/assets/churcheden_favicon.png";
 
 const NAV_LINKS = [
   { label: "Product", hasDropdown: true },
@@ -13,7 +14,7 @@ const NAV_LINKS = [
 
 /**
  * Sticky top navigation for the light SaaS landing page.
- * White background, dark-navy wordmark, gold CTA.
+ * White background, crisp gold ChurchEden emblem + dark-navy wordmark, gold CTA.
  */
 export function LandingNav() {
   const navigate = useNavigate();
@@ -22,12 +23,17 @@ export function LandingNav() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0F172A]">
-            <Bird size={18} strokeWidth={1.75} className="text-[#D4A017]" />
-          </div>
-          <span className="font-eden text-xl font-bold tracking-tight text-[#0F172A]">
+        {/* Logo lockup: High-res circular emblem + ChurchEden wordmark */}
+        <div
+          onClick={() => navigate("/")}
+          className="flex cursor-pointer items-center gap-2.5 sm:gap-3 transition-opacity hover:opacity-90"
+        >
+          <img
+            src={churchedenFavicon}
+            alt="ChurchEden"
+            className="h-9 w-9 sm:h-10 sm:w-10 object-contain transition-transform hover:scale-105"
+          />
+          <span className="font-eden text-xl sm:text-[1.35rem] font-bold tracking-tight text-[#0F172A]">
             ChurchEden
           </span>
         </div>
