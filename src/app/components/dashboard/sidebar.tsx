@@ -7,7 +7,7 @@ import {
   UserCog, X, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-context";
-import churchedenFavicon from "@/assets/churcheden_favicon.png";
+import justLogoTransparent from "@/assets/Just-logo-transparent.png";
 
 interface NavItem {
   icon: React.ElementType;
@@ -107,7 +107,7 @@ export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProp
       >
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-5 pt-6 pb-5">
-          <img src={churchedenFavicon} alt="ChurchEden" className="h-7 w-7 object-contain" />
+          <img src={justLogoTransparent} alt="ChurchEden" className="h-7 w-7 object-contain" />
           <span style={{ fontFamily: "var(--font-heading)", fontSize: "20px", fontWeight: 700, color: "#1A1A2E" }}>
             ChurchEden
           </span>

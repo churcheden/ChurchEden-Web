@@ -24,17 +24,6 @@
   "include": ["src"],
   "exclude": [
     "node_modules",
-    "dist",
-    "src/app/components/aurora-background.tsx",
-    "src/app/components/brand-panel.tsx",
-    "src/app/components/glass-card.tsx",
-    "src/app/components/tab-switcher.tsx",
-    "src/app/components/register-form.tsx",
-    "src/app/components/signin-form.tsx",
-    "src/app/components/mobile-brand-header.tsx",
-    "src/app/components/amber-button.tsx",
-    "src/app/components/input-field.tsx",
-    "src/app/components/church-setup-wizard.tsx",
-    "src/app/components/success-screen.tsx"
+    "dist"
   ]
 }

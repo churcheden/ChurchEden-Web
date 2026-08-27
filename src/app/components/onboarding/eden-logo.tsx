@@ -1,5 +1,5 @@
 import { cn } from "../ui/utils";
-import churchedenFavicon from "@/assets/churcheden_favicon.png";
+import justLogoTransparent from "@/assets/Just-logo-transparent.png";
 
 interface EdenLogoProps {
   className?: string;
@@ -15,7 +15,7 @@ export function EdenLogo({ className, imgClassName, textClassName }: EdenLogoPro
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
       <img
-        src={churchedenFavicon}
+        src={justLogoTransparent}
         alt="ChurchEden"
         className={cn("h-8 w-8 sm:h-9 sm:w-9 object-contain", imgClassName)}
       />

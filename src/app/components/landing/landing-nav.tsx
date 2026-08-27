@@ -6,10 +6,10 @@ import { cn } from "../ui/utils";
 import churchedenFavicon from "@/assets/churcheden_favicon.png";
 
 const NAV_LINKS = [
-  { label: "Product", hasDropdown: true },
-  { label: "Pricing", hasDropdown: false },
-  { label: "Resources", hasDropdown: true },
-  { label: "About Us", hasDropdown: false },
+  { label: "Home", href: "/", hasDropdown: false },
+  { label: "Pricing", href: "#", hasDropdown: false },
+  { label: "Resources", href: "#", hasDropdown: true },
+  { label: "About Us", href: "#", hasDropdown: false },
 ];
 
 /**
@@ -43,6 +43,12 @@ export function LandingNav() {
           {NAV_LINKS.map((link) => (
             <button
               key={link.label}
+              onClick={() => {
+                if (link.href === "/") {
+                  navigate("/");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
               className="flex items-center gap-1 text-sm font-medium text-slate-600 transition-colors hover:text-[#0F172A]"
             >
               {link.label}
@@ -55,7 +61,10 @@ export function LandingNav() {
 
         {/* Right CTAs — desktop */}
         <div className="hidden items-center gap-3 lg:flex">
-          <button className="rounded-lg border border-[#0F172A]/20 px-5 py-2 text-sm font-medium text-[#0F172A] transition-all hover:bg-slate-50">
+          <button
+            onClick={() => navigate("/onboarding/signin")}
+            className="rounded-lg border border-[#0F172A]/20 px-5 py-2 text-sm font-medium text-[#0F172A] transition-all hover:bg-slate-50"
+          >
             Log in
           </button>
           <motion.button
@@ -95,6 +104,13 @@ export function LandingNav() {
               {NAV_LINKS.map((link) => (
                 <button
                   key={link.label}
+                  onClick={() => {
+                    if (link.href === "/") {
+                      navigate("/");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                      setMobileOpen(false);
+                    }
+                  }}
                   className={cn(
                     "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50",
                   )}
@@ -104,11 +120,20 @@ export function LandingNav() {
                 </button>
               ))}
               <div className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3">
-                <button className="w-full rounded-lg border border-[#0F172A]/20 py-2.5 text-sm font-medium text-[#0F172A]">
+                <button
+                  onClick={() => {
+                    navigate("/onboarding/signin");
+                    setMobileOpen(false);
+                  }}
+                  className="w-full rounded-lg border border-[#0F172A]/20 py-2.5 text-sm font-medium text-[#0F172A]"
+                >
                   Log in
                 </button>
                 <button
-                  onClick={() => navigate("/onboarding/welcome")}
+                  onClick={() => {
+                    navigate("/onboarding/welcome");
+                    setMobileOpen(false);
+                  }}
                   className="w-full rounded-lg bg-[#D4A017] py-2.5 text-sm font-semibold text-white"
                 >
                   Get Started

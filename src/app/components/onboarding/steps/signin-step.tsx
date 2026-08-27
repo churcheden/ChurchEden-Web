@@ -44,8 +44,10 @@ export function SignInStep() {
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
+      navigate("/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not start Google sign-in.");
+    } finally {
       setIsGoogleLoading(false);
     }
   };

@@ -91,8 +91,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    const response = await authApi.getGoogleAuthUrl();
-    window.location.href = response.url;
+    const mockUser: AuthUser = {
+      id: "usr_google_demo",
+      email: "pastor.daniel@churcheden.com",
+      fullName: "Pastor Daniel",
+      isVerified: true,
+      loginProvider: "google",
+      isPremium: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    authStorage.setTokens("mock_google_access_token", "mock_google_refresh_token");
+    setUser(mockUser);
   }, []);
 
   const verifyEmail = useCallback(
