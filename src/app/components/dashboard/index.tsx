@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "./sidebar";
 import { TopNav } from "./top-nav";
 import { StatCards } from "./stat-cards";
@@ -22,6 +22,14 @@ import { ChurchSettingsPage } from "./church-settings";
 import { AdminManagementPage } from "./admin-management";
 
 type Page = "Overview" | "Members" | string;
+
+const DASHBOARD_PAGE_KEY = "ce_dashboard_page";
+
+function readPersistedPage(): Page {
+  const saved = sessionStorage.getItem(DASHBOARD_PAGE_KEY);
+  if (saved) return saved;
+  return "Overview";
+}
 
 function OverviewContent() {
   return (
@@ -49,7 +57,12 @@ function OverviewContent() {
 
 export function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState<Page>("Overview");
+  const [currentPage, setCurrentPage] = useState<Page>(readPersistedPage);
+
+  // Persist the current dashboard page so a refresh keeps the user on it.
+  useEffect(() => {
+    sessionStorage.setItem(DASHBOARD_PAGE_KEY, currentPage);
+  }, [currentPage]);
 
   const pageTitle: Record<string, string> = {
     Overview: "Church Overview",

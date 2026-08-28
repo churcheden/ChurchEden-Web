@@ -32,11 +32,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const hydrateUser = useCallback(async () => {
-    try {
+    const attempt = async () => {
       const response = await authApi.getCurrentUser();
       setUser(response.user);
-    } catch {
+      return true;
+    };
+
+    try {
+      return await attempt();
+    } catch (error) {
+      // The access token may have expired since last load — attempt a single
+      // token refresh before treating the session as invalid. This keeps
+      // authenticated users signed in across a page refresh instead of
+      // bouncing them back to onboarding.
+      if (
+        error instanceof ApiError &&
+        error.status === 401 &&
+        authStorage.getRefreshToken()
+      ) {
+        try {
+          await authApi.refreshTokens();
+          return await attempt();
+        } catch {
+          setUser(null);
+          return false;
+        }
+      }
       setUser(null);
+      return false;
     }
   }, []);
 

@@ -6,6 +6,7 @@ import {
   BarChart2, Users, Send, Clock, Eye, BookTemplate,
   RefreshCcw, Download, Filter, Megaphone, Star,
 } from "lucide-react";
+import { FormDialog } from "./form-dialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -512,20 +513,28 @@ function CreatePanel({ ann, onClose }: { ann?: Announcement; onClose: () => void
   const smsCount = bodyText.length;
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.38)", backdropFilter: "blur(2px)" }} />
-      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "min(920px, 94vw)", background: BG, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "-8px 0 40px rgba(0,0,0,0.12)" }}>
-        {/* Header */}
-        <div style={{ background: "#fff", borderBottom: "1px solid #EBEBEB", padding: "15px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-          <span style={{ fontFamily: "var(--font-label)", fontSize: 17, fontWeight: 700, color: DARK }}>{ann ? "Edit Announcement" : "New Announcement"}</span>
-          <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", borderRadius: 99, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <X size={15} color="#374151" />
-          </button>
+    <FormDialog
+      open
+      onClose={onClose}
+      icon={<Bell size={20} color="#C8860A" />}
+      title={ann ? "Edit Announcement" : "New Announcement"}
+      description={ann ? "Update this announcement for your members." : "Create and send an announcement across your channels."}
+      maxWidth="max-w-4xl"
+      footer={(
+        <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
+          <OutlineBtn icon={<BookTemplate size={13} />}>Save as Template</OutlineBtn>
+          <OutlineBtn>Save Draft</OutlineBtn>
+          <OutlineBtn icon={<Eye size={13} />}>Preview</OutlineBtn>
+          <div style={{ marginLeft: "auto" }}>
+            <DarkBtn icon={sendNow ? <Send size={13} /> : <Clock size={13} />}>
+              {sendNow ? "Send Now" : "Schedule"}
+            </DarkBtn>
+          </div>
         </div>
-
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "22px 24px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      )}
+    >
+      <div style={{ padding: "22px 24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
 
             {/* Left: Content */}
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -755,20 +764,7 @@ function CreatePanel({ ann, onClose }: { ann?: Announcement; onClose: () => void
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div style={{ background: "#fff", borderTop: "1px solid #EBEBEB", padding: "13px 24px", display: "flex", gap: 10, flexShrink: 0, alignItems: "center" }}>
-          <OutlineBtn icon={<BookTemplate size={13} />}>Save as Template</OutlineBtn>
-          <OutlineBtn>Save Draft</OutlineBtn>
-          <OutlineBtn icon={<Eye size={13} />}>Preview</OutlineBtn>
-          <div style={{ marginLeft: "auto" }}>
-            <DarkBtn icon={sendNow ? <Send size={13} /> : <Clock size={13} />}>
-              {sendNow ? "Send Now" : "Schedule"}
-            </DarkBtn>
-          </div>
-        </div>
-      </div>
-    </div>
+    </FormDialog>
   );
 }
 

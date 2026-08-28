@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  X, UserPlus, UploadCloud, Calendar, MapPin, Briefcase,
+  UserPlus, UploadCloud, Calendar, MapPin, Briefcase,
   ChevronDown, Check, Search, Mail, Phone, Trash2,
 } from "lucide-react";
 import type { Member } from "./mock-data";
+import { FormDialog } from "../form-dialog";
 
 // ─── Design tokens (match dashboard) ─────────────────────────────────────────
 const GOLD          = "#C8860A";
 const INK           = "#1A1A1A";
 const MUTED         = "#9CA3AF";
-const BODY          = "#4B5563";
 const BORDER        = "#E8E4DE";
 const BORDER_SOFT   = "#EDEAE6";
 const ERROR         = "#B3261E";
@@ -610,74 +610,23 @@ export function AddMemberModal({
     if (open) setTimeout(() => firstNameRef.current?.querySelector("input")?.focus(), 50);
   }, [open]);
 
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !submitting) onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, submitting, onClose]);
-
   return (
-    <AnimatePresence>
-      {open && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-member-title"
-        >
-          {/* Backdrop */}
-          <motion.div
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            style={{ background: "rgba(20,16,16,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
-            onClick={onClose}
-          />
-
-          {/* Panel */}
-          <motion.div
-            initial={{ opacity: 0, y: 14, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.99 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-2xl flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden rounded-2xl"
-            style={{ background: "#FFFFFF", boxShadow: "0 30px 70px rgba(0,0,0,0.28)", border: "1px solid rgba(255,255,255,0.4)" }}
-          >
-            {/* Header */}
-            <div className="flex items-start gap-3.5 px-6 sm:px-7 pt-6 pb-5 flex-shrink-0" style={{ borderBottom: `1px solid ${BORDER_SOFT}`, background: "#FFFFFF" }}>
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(200,134,10,0.10)" }}
-              >
-                <UserPlus size={20} color={GOLD} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 id="add-member-title" style={{ fontSize: "18px", fontWeight: 700, color: INK, fontFamily: FONT, letterSpacing: "-0.01em" }}>
-                  Add New Member
-                </h2>
-                <p style={{ fontSize: "13px", color: MUTED, fontFamily: FONT, marginTop: "2px" }}>
-                  Add a new member to your church directory.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Close"
-                className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors hover:bg-[#F0EEE9]"
-                style={{ color: MUTED }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Form body */}
-            <form id="add-member-form" onSubmit={handleSubmit} className="overflow-y-auto px-6 sm:px-7 py-6 flex-1">
+    <FormDialog
+      open={open}
+      onClose={onClose}
+      icon={<UserPlus size={20} color={GOLD} />}
+      title="Add New Member"
+      description="Add a new member to your church directory."
+      submitFormId="add-member-form"
+      submitting={submitting}
+      primaryButton={{
+        label: "Add Member",
+        icon: <UserPlus size={15} color="#FFFFFF" />,
+        loadingLabel: "Adding...",
+        onClick: () => {},
+      }}
+    >
+      <form id="add-member-form" onSubmit={handleSubmit} className="px-6 sm:px-7 py-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
                 {/* First name */}
                 <div ref={firstNameRef}>
@@ -813,51 +762,7 @@ export function AddMemberModal({
                 </div>
               </div>
             </form>
-
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 sm:px-7 py-5 flex-shrink-0" style={{ borderTop: `1px solid ${BORDER_SOFT}`, background: "#FFFFFF" }}>
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={submitting}
-                className="px-5 py-2.5 rounded-xl transition-all hover:bg-[#F0EEE9] active:scale-[0.98] disabled:opacity-50"
-                style={{ fontSize: "13.5px", fontWeight: 600, color: BODY, fontFamily: FONT, border: `1px solid ${BORDER}`, background: "#FFFFFF" }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="add-member-form"
-                disabled={submitting}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{
-                  background: submitting ? "rgba(200,134,10,0.7)" : `linear-gradient(135deg, ${GOLD} 0%, #D99A20 100%)`,
-                  boxShadow: `0 6px 16px rgba(200,134,10,0.28)`,
-                  fontSize: "13.5px", fontWeight: 700, color: "#FFFFFF", fontFamily: FONT,
-                }}
-              >
-                {submitting ? (
-                  <>
-                  <motion.span
-                    className="inline-block w-4 h-4 rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 0.7, ease: "linear" }}
-                    style={{ border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#FFFFFF" }}
-                  />
-                  Adding...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus size={15} color="#FFFFFF" />
-                    Add Member
-                  </>
-                )}
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+    </FormDialog>
   );
 }
 

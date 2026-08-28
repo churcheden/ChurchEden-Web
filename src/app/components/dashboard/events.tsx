@@ -1,12 +1,13 @@
 import { useState } from "react";
 import {
   Search, Calendar, Grid3X3, List, Plus, SlidersHorizontal,
-  ChevronDown, Edit3, Copy, Archive, Share2, Eye, X, Check,
+  ChevronDown, Edit3, Copy, Archive, Share2, Eye, Check,
   RotateCcw, Users, Ticket, TrendingUp, Bell, QrCode, Download,
   ChevronRight, Filter, Clock, MapPin, Tag, Repeat2,
   ArrowRight, BarChart2, AlertCircle, Send, Upload, ToggleLeft,
   ToggleRight, ChevronLeft, Maximize2, CheckCircle2, XCircle
 } from "lucide-react";
+import { FormDialog } from "./form-dialog";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -572,23 +573,25 @@ function CreateEventPanel({ event, onClose }: { event?: Event; onClose: () => vo
   const isEditing = !!event;
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex" }}>
-      {/* Backdrop */}
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(2px)" }} />
-
-      {/* Panel */}
-      <div style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "min(900px, 92vw)", background: BG, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "-8px 0 40px rgba(0,0,0,0.12)" }}>
-        {/* Header */}
-        <div style={{ background: "#fff", borderBottom: "1px solid #EBEBEB", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-          <span style={{ fontFamily: "var(--font-label)", fontSize: 18, fontWeight: 700, color: "#1A1A1A" }}>{isEditing ? "Edit Event" : "Create New Event"}</span>
-          <button onClick={onClose} style={{ background: "#F3F4F6", border: "none", borderRadius: 99, width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <X size={16} color="#374151" />
-          </button>
+    <FormDialog
+      open
+      onClose={onClose}
+      icon={<Calendar size={20} color="#C8860A" />}
+      title={isEditing ? "Edit Event" : "Create New Event"}
+      description={isEditing ? "Update the details of this event." : "Plan a new event and publish it to your members."}
+      maxWidth="max-w-4xl"
+      footer={(
+        <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
+          <OutlineBtn>Save as Draft</OutlineBtn>
+          <OutlineBtn><Eye size={14} />Preview</OutlineBtn>
+          <div style={{ marginLeft: "auto" }}>
+            <DarkBtn icon={<Check size={14} />}>Publish Event</DarkBtn>
+          </div>
         </div>
-
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+      )}
+    >
+      <div style={{ padding: "24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
 
             {/* ── Left Column ── */}
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -778,17 +781,7 @@ function CreateEventPanel({ event, onClose }: { event?: Event; onClose: () => vo
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div style={{ background: "#fff", borderTop: "1px solid #EBEBEB", padding: "14px 24px", display: "flex", gap: 10, flexShrink: 0 }}>
-          <OutlineBtn>Save as Draft</OutlineBtn>
-          <OutlineBtn><Eye size={14} />Preview</OutlineBtn>
-          <div style={{ marginLeft: "auto" }}>
-            <DarkBtn icon={<Check size={14} />}>Publish Event</DarkBtn>
-          </div>
-        </div>
-      </div>
-    </div>
+    </FormDialog>
   );
 }
 
