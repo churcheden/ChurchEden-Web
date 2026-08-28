@@ -1,485 +1,813 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  X, Search, UserPlus, Wifi, WifiOff, ChevronDown,
-  QrCode, Users, CheckCircle2, Clock, AlertTriangle, Check, Camera,
+  QrCode as QrCodeIcon,
+  Users,
+  UserCheck,
+  TrendingUp,
+  Activity,
+  Play,
+  Pause,
+  RotateCcw,
+  Power,
+  Maximize2,
+  Download,
+  Share2,
+  Copy,
+  Clock,
+  RefreshCw,
+  MapPin,
+  CalendarDays,
+  Lightbulb,
+  ShieldCheck,
+  Wifi,
+  AlertTriangle,
+  X,
 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
+import { toast, Toaster } from "sonner";
+import { FormDialog, DIALOG_BODY } from "./form-dialog";
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
-const BRAND = "#C8860A";
+const BG = "#F5F4EF";
+const GOLD = "#C8860A";
+const INK = "#1A1A1A";
+const BODY = "#4B5563";
+const MUTED = "#9CA3AF";
+const BORDER = "#EDEAE6";
 const SUCCESS = "#22C55E";
-const WARN = "#F59E0B";
+const AMBER = "#F59E0B";
 const DANGER = "#EF4444";
+const NAVY = "#0F1729";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
-const MOCK_MEMBERS = [
-  { id: "MBR-0041", name: "Dr. Kwame Asante", ministry: "All Members", initials: "KA", color: "#2D1B69", checkedIn: false, checkTime: "" },
-  { id: "MBR-0018", name: "Sis. Grace Mensah", ministry: "Choir", initials: "GM", color: BRAND, checkedIn: true, checkTime: "8:52 AM" },
-  { id: "MBR-0072", name: "Bro. Yaw Amponsah", ministry: "Youth", initials: "YA", color: "#0A4A3A", checkedIn: false, checkTime: "" },
-  { id: "MBR-0033", name: "Elder Abena Osei", ministry: "Prayer Team", initials: "AO", color: "#7C3AED", checkedIn: true, checkTime: "9:01 AM" },
-  { id: "MBR-0055", name: "Sis. Ama Boateng", ministry: "Children's", initials: "AB", color: "#B45309", checkedIn: false, checkTime: "" },
-  { id: "MBR-0011", name: "Deacon Kofi Mensah", ministry: "All Members", initials: "KM", color: "#2D1B69", checkedIn: true, checkTime: "8:44 AM" },
-  { id: "MBR-0029", name: "Sis. Akosua Darko", ministry: "Media", initials: "AD", color: "#DB2777", checkedIn: false, checkTime: "" },
-  { id: "MBR-0064", name: "Bro. Emmanuel Ofori", ministry: "Youth", initials: "EO", color: "#0A4A3A", checkedIn: true, checkTime: "9:10 AM" },
+interface ServiceOption {
+  id: string;
+  name: string;
+  date: string;
+  time: string;
+  location: string;
+  registrations: number;
+}
+
+const SERVICES: ServiceOption[] = [
+  { id: "SVC-2304", name: "Sunday Main Service", date: "Sun, Aug 30", time: "9:00 – 11:30 AM", location: "Main Sanctuary", registrations: 248 },
+  { id: "SVC-2298", name: "Mid-Week Bible Study", date: "Wed, Aug 26", time: "6:30 – 8:00 PM", location: "Fellowship Hall", registrations: 132 },
+  { id: "SVC-2301", name: "Youth Revival", date: "Sat, Aug 29", time: "4:00 – 6:30 PM", location: "Youth Auditorium", registrations: 87 },
+  { id: "SVC-2306", name: "Morning Intercession", date: "Fri, Aug 28", time: "5:00 – 6:30 AM", location: "Prayer Room", registrations: 42 },
 ];
 
-const LIVE_FEED_INIT = [
-  { name: "Elder Abena Osei", time: "9:01 AM", initials: "AO", color: "#7C3AED" },
-  { name: "Deacon Kofi Mensah", time: "8:44 AM", initials: "KM", color: "#2D1B69" },
-  { name: "Sis. Grace Mensah", time: "8:52 AM", initials: "GM", color: BRAND },
-  { name: "Bro. Emmanuel Ofori", time: "9:10 AM", initials: "EO", color: "#0A4A3A" },
-  { name: "Dr. Kwame Asante", time: "9:04 AM", initials: "KA", color: "#2D1B69" },
+interface CheckIn {
+  id: string;
+  name: string;
+  time: string;
+  initials: string;
+  color: string;
+  source: "QR" | "Manual";
+}
+
+const INITIAL_CHECKINS: CheckIn[] = [
+  { id: "MBR-0064", name: "Bro. Emmanuel Ofori", time: "9:10 AM", initials: "EO", color: "#0A4A3A", source: "QR" },
+  { id: "MBR-0011", name: "Deacon Kofi Mensah", time: "9:07 AM", initials: "KM", color: "#2D1B69", source: "QR" },
+  { id: "MBR-0041", name: "Dr. Kwame Asante", time: "9:04 AM", initials: "KA", color: "#2D1B69", source: "QR" },
+  { id: "MBR-0033", name: "Elder Abena Osei", time: "9:01 AM", initials: "AO", color: "#7C3AED", source: "Manual" },
+  { id: "MBR-0018", name: "Sis. Grace Mensah", time: "8:52 AM", initials: "GM", color: GOLD, source: "QR" },
 ];
 
-type ScanState = "idle" | "success" | "duplicate" | "notfound";
-type Mode = "scan" | "manual";
+const PENDING_FEED = [
+  { id: "MBR-0072", name: "Bro. Yaw Amponsah", initials: "YA", color: "#0A4A3A" },
+  { id: "MBR-0055", name: "Sis. Ama Boateng", initials: "AB", color: "#B45309" },
+  { id: "MBR-0029", name: "Sis. Akosua Darko", initials: "AD", color: "#DB2777" },
+  { id: "MBR-0066", name: "Deacon Kwabena Owusu", initials: "KO", color: "#2563EB" },
+  { id: "MBR-0044", name: "Sis. Efua Adjei", initials: "EA", color: "#B91C1C" },
+];
 
-// ─── Small atoms ─────────────────────────────────────────────────────────────
+const QUICK_TIPS = [
+  { icon: <Wifi size={16} />, title: "Share the live link", text: "Members without the app can open the attendance link on any phone." },
+  { icon: <RefreshCw size={16} />, title: "Regenerate for events", text: "Rotate the QR between services so each session stays unique." },
+  { icon: <ShieldCheck size={16} />, title: "Auto-expiry", text: `Sessions end automatically after ${"60"} minutes or when you End it manually.` },
+  { icon: <Users size={16} />, title: "Manual fallback", text: "Front-desk can add check-ins manually for walk-in guests whose phone is low." },
+];
+
+function timeNow(): string {
+  const d = new Date();
+  let h = d.getHours();
+  const m = d.getMinutes().toString().padStart(2, "0");
+  const ap = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${m} ${ap}`;
+}
+
+// ─── Atoms ────────────────────────────────────────────────────────────────────
 
 function Avatar({ initials, color, size = 36 }: { initials: string; color: string; size?: number }) {
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: `${color}30`, border: `2px solid ${color}60`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+    <div
+      className="flex items-center justify-center flex-shrink-0"
+      style={{ width: size, height: size, borderRadius: "50%", background: `${color}22`, border: `1.5px solid ${color}55` }}
+    >
       <span style={{ fontFamily: "var(--font-label)", fontSize: size * 0.34, fontWeight: 700, color }}>{initials}</span>
     </div>
   );
 }
 
-// ─── Corner bracket SVG ───────────────────────────────────────────────────────
-
-function CornerBrackets({ color, size = 28, thickness = 3 }: { color: string; size?: number; thickness?: number }) {
-  const s = size;
-  const t = thickness;
-  const corners = [
-    // top-left
-    `M 0 ${s} L 0 0 L ${s} 0`,
-    // top-right (reflected)
-    `M 0 ${s} L 0 0 L ${-s} 0`,
-    // bottom-left
-    `M 0 ${-s} L 0 0 L ${s} 0`,
-    // bottom-right
-    `M 0 ${-s} L 0 0 L ${-s} 0`,
-  ];
-  const positions = [
-    { top: 0, left: 0 },
-    { top: 0, right: 0 },
-    { bottom: 0, left: 0 },
-    { bottom: 0, right: 0 },
-  ];
-  return (
-    <>
-      {corners.map((d, i) => (
-        <svg
-          key={i}
-          width={s} height={s}
-          viewBox={`${-s} ${-s} ${s * 2} ${s * 2}`}
-          style={{ position: "absolute", ...positions[i] }}
-        >
-          <path d={d} fill="none" stroke={color} strokeWidth={t} strokeLinecap="round" />
-        </svg>
-      ))}
-    </>
-  );
-}
-
-// ─── Scan Zone ────────────────────────────────────────────────────────────────
-
-function ScanZone({ scanState }: { scanState: ScanState }) {
-  const borderColor =
-    scanState === "success" ? SUCCESS :
-    scanState === "duplicate" ? WARN :
-    scanState === "notfound" ? DANGER :
-    "rgba(255,255,255,0.15)";
-
-  const bracketColor =
-    scanState === "idle" ? BRAND :
-    scanState === "success" ? SUCCESS :
-    scanState === "duplicate" ? WARN :
-    DANGER;
-
-  return (
-    <div style={{
-      position: "relative",
-      width: "100%",
-      maxWidth: 340,
-      aspectRatio: "1 / 1",
-      borderRadius: 20,
-      border: `2.5px solid ${borderColor}`,
-      background: "rgba(255,255,255,0.03)",
-      overflow: "hidden",
-      transition: "border-color 0.3s",
-      boxShadow: scanState === "success" ? `0 0 32px rgba(34,197,94,0.25)` :
-                 scanState === "duplicate" ? `0 0 32px rgba(245,158,11,0.25)` :
-                 scanState === "notfound" ? `0 0 32px rgba(239,68,68,0.25)` :
-                 "0 0 40px rgba(0,0,0,0.6)",
-    }}>
-      {/* Corner brackets overlay */}
-      <div style={{ position: "absolute", inset: 12, pointerEvents: "none" }}>
-        <CornerBrackets color={bracketColor} size={28} thickness={3} />
-      </div>
-
-      {/* Simulated camera content */}
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, #111 0%, #1a1a1a 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ opacity: 0.08 }}>
-          <QrCode size={120} color="#fff" />
-        </div>
-      </div>
-
-      {/* Scanning line — only in idle */}
-      {scanState === "idle" && (
-        <div style={{
-          position: "absolute", left: 16, right: 16, height: 2,
-          background: `linear-gradient(90deg, transparent, ${BRAND}, transparent)`,
-          boxShadow: `0 0 8px ${BRAND}`,
-          animation: "scanLine 2s ease-in-out infinite",
-        }} />
-      )}
-
-      {/* State overlays */}
-      {scanState === "success" && (
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(34,197,94,0.12)" }}>
-          <CheckCircle2 size={56} color={SUCCESS} strokeWidth={1.5} />
-          <span style={{ fontFamily: "var(--font-label)", fontSize: 16, fontWeight: 700, color: SUCCESS }}>Verified</span>
-        </div>
-      )}
-      {scanState === "duplicate" && (
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(245,158,11,0.12)" }}>
-          <AlertTriangle size={52} color={WARN} strokeWidth={1.5} />
-          <span style={{ fontFamily: "var(--font-label)", fontSize: 15, fontWeight: 700, color: WARN }}>Already Checked In</span>
-        </div>
-      )}
-      {scanState === "notfound" && (
-        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, background: "rgba(239,68,68,0.12)" }}>
-          <X size={52} color={DANGER} strokeWidth={1.5} />
-          <span style={{ fontFamily: "var(--font-label)", fontSize: 15, fontWeight: 700, color: DANGER }}>Not Found</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Member Card (slides up on scan) ─────────────────────────────────────────
-
-function CheckInCard({ member, scanState }: {
-  member: typeof MOCK_MEMBERS[0] | null;
-  scanState: ScanState;
+function Card({
+  children,
+  className = "",
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
 }) {
-  if (!member || scanState === "idle") return null;
-
-  const isLate = false; // would check against service start time
-
-  const stateConfig = {
-    success: { label: `Checked In — ${new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`, color: SUCCESS, bg: "rgba(34,197,94,0.12)" },
-    duplicate: { label: `Already checked in at ${member.checkTime}`, color: WARN, bg: "rgba(245,158,11,0.10)" },
-    notfound: { label: "Member not found — Try manual search", color: DANGER, bg: "rgba(239,68,68,0.10)" },
-    idle: { label: "", color: "", bg: "" },
-  }[scanState];
-
   return (
-    <div style={{
-      background: "#1A1A1A",
-      borderRadius: 20,
-      border: `1px solid rgba(255,255,255,0.10)`,
-      padding: "20px 24px",
-      display: "flex",
-      alignItems: "center",
-      gap: 18,
-      animation: "slideUp 0.3s ease-out",
-      boxShadow: "0 -8px 40px rgba(0,0,0,0.5)",
-    }}>
-      {scanState !== "notfound" ? (
-        <>
-          <Avatar initials={member.initials} color={member.color} size={56} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: "var(--font-label)", fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 3 }}>{member.name}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontFamily: "var(--font-label)", fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{member.ministry}</span>
-              {isLate && <span style={{ fontFamily: "var(--font-label)", fontSize: 11, fontWeight: 600, color: WARN, background: "rgba(245,158,11,0.15)", padding: "2px 8px", borderRadius: 99 }}>Late</span>}
-            </div>
-            <div style={{ fontFamily: "var(--font-label)", fontSize: 14, fontWeight: 700, color: stateConfig.color, marginTop: 6 }}>{stateConfig.label}</div>
-          </div>
-          <div style={{ width: 48, height: 48, borderRadius: "50%", background: stateConfig.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {scanState === "success" && <CheckCircle2 size={24} color={SUCCESS} />}
-            {scanState === "duplicate" && <AlertTriangle size={24} color={WARN} />}
-          </div>
-        </>
-      ) : (
-        <div style={{ flex: 1, textAlign: "center" }}>
-          <div style={{ fontFamily: "var(--font-label)", fontSize: 15, fontWeight: 600, color: DANGER }}>{stateConfig.label}</div>
-        </div>
-      )}
+    <div
+      className={`rounded-2xl ${className}`}
+      style={{ background: "#FFFFFF", border: `1px solid ${BORDER}`, boxShadow: "0 1px 2px rgba(15,23,41,0.04)", ...style }}
+    >
+      {children}
     </div>
   );
 }
 
-// ─── Guest Check-in Modal ─────────────────────────────────────────────────────
-
-function GuestModal({ onClose }: { onClose: () => void }) {
+function SectionTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }} />
-      <div style={{ position: "relative", background: "#1A1A1A", borderRadius: 20, padding: "28px 28px", width: "min(460px, 90vw)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 24px 60px rgba(0,0,0,0.6)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
-          <span style={{ fontFamily: "var(--font-label)", fontSize: 16, fontWeight: 700, color: "#fff" }}>Log First-Timer Guest</span>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: 99, width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-            <X size={14} color="rgba(255,255,255,0.6)" />
-          </button>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {[
-            { label: "Full Name", placeholder: "Guest's full name", type: "text" },
-            { label: "Phone Number", placeholder: "+233 …", type: "tel" },
-          ].map(f => (
-            <div key={f.label}>
-              <label style={{ fontFamily: "var(--font-label)", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 6 }}>{f.label}</label>
-              <input type={f.type} placeholder={f.placeholder}
-                style={{ background: "rgba(255,255,255,0.07)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 14px", fontFamily: "var(--font-label)", fontSize: 13, color: "#fff", outline: "none", width: "100%", boxSizing: "border-box" as const }} />
-            </div>
-          ))}
-          <div>
-            <label style={{ fontFamily: "var(--font-label)", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", display: "block", marginBottom: 6 }}>How did you hear about us?</label>
-            <select style={{ background: "rgba(255,255,255,0.07)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: 10, padding: "10px 14px", fontFamily: "var(--font-label)", fontSize: 13, color: "#fff", outline: "none", width: "100%" }}>
-              <option>Friend / Family</option>
-              <option>Social Media</option>
-              <option>Walked in</option>
-              <option>Online / YouTube</option>
-              <option>Flyer / Billboard</option>
-            </select>
-          </div>
-          <button style={{ background: BRAND, color: "#fff", border: "none", borderRadius: 99, padding: "12px", fontFamily: "var(--font-label)", fontSize: 14, fontWeight: 700, cursor: "pointer", marginTop: 4 }}>
-            Log Guest Check-in
-          </button>
+    <div className="flex items-center justify-between mb-4">
+      <h3 style={{ fontFamily: "var(--font-label)", fontSize: "15px", fontWeight: 700, color: INK }}>{children}</h3>
+      {action}
+    </div>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+  accent = GOLD,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  sub?: React.ReactNode;
+  accent?: string;
+}) {
+  return (
+    <Card className="p-4 sm:p-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <span style={{ fontFamily: "var(--font-label)", fontSize: "12px", fontWeight: 600, color: MUTED }}>{label}</span>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${accent}14` }}>
+          <span style={{ color: accent }}>{icon}</span>
         </div>
       </div>
-    </div>
+      <div>
+        <div style={{ fontFamily: "var(--font-label)", fontSize: "26px", fontWeight: 800, color: INK, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+          {value}
+        </div>
+        {sub && <div className="mt-2" style={{ fontFamily: "var(--font-label)", fontSize: "12px", color: MUTED }}>{sub}</div>}
+      </div>
+    </Card>
   );
 }
 
-// ─── Main QR Attendance Page ──────────────────────────────────────────────────
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export function QRAttendancePage() {
-  const [mode, setMode] = useState<Mode>("scan");
-  const [scanState, setScanState] = useState<ScanState>("idle");
-  const [scannedMember, setScannedMember] = useState<typeof MOCK_MEMBERS[0] | null>(null);
-  const [checkedInCount, setCheckedInCount] = useState(142);
-  const [liveFeed, setLiveFeed] = useState(LIVE_FEED_INIT);
-  const [search, setSearch] = useState("");
-  const [showGuest, setShowGuest] = useState(false);
-  const [isOffline, setIsOffline] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Load / skeleton
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const filteredMembers = MOCK_MEMBERS.filter(m =>
-    !search || m.name.toLowerCase().includes(search.toLowerCase()) || m.id.toLowerCase().includes(search.toLowerCase())
+  // Session state
+  const [service, setService] = useState<ServiceOption>(SERVICES[0]);
+  const [sessionToken, setSessionToken] = useState("SAT-7F3K-9Q2M-XR5D");
+  const [startAt, setStartAt] = useState<number | null>(null);
+  const [pausedRemaining, setPausedRemaining] = useState<number>(60 * 60);
+  const [accrued, setAccrued] = useState<number>(0);
+  const [status, setStatus] = useState<"idle" | "active" | "paused" | "expired">("idle");
+
+  // Data
+  const [checkins, setCheckins] = useState<CheckIn[]>(INITIAL_CHECKINS);
+  const feedRef = useRef(0);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  // ── Simulated load ──
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 900);
+    return () => clearTimeout(t);
+  }, []);
+
+  // ── Countdown while active ──
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (status !== "active") return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [status]);
+
+  // ── Auto check-in feed while active ──
+  useEffect(() => {
+    if (status !== "active") return;
+    const id = window.setInterval(() => {
+      if (feedRef.current >= PENDING_FEED.length) return;
+      const nxt = PENDING_FEED[feedRef.current];
+      feedRef.current += 1;
+      setCheckins((prev) => [
+        { ...nxt, time: timeNow(), source: nxt.id.includes("7") ? "Manual" : "QR" },
+        ...prev,
+      ]);
+      toast.success(`${nxt.name} checked in via QR`);
+    }, 9000);
+    return () => window.clearInterval(id);
+  }, [status]);
+
+  // Derived
+  const registered = service.registrations;
+  const present = checkins.length;
+
+  const totalRemainingSec =
+    status === "active"
+      ? Math.max(0, Math.round((pausedRemaining - (now - (startAt ?? now)) / 1000) + accrued))
+      : Math.max(0, pausedRemaining);
+
+  const hh = Math.floor(totalRemainingSec / 3600);
+  const mm = Math.floor((totalRemainingSec % 3600) / 60);
+  const ss = totalRemainingSec % 60;
+  const countdown = `${hh.toString().padStart(2, "0")}:${mm.toString().padStart(2, "0")}:${ss.toString().padStart(2, "0")}`;
+
+  const rate = registered > 0 ? Math.round((present / registered) * 100) : 0;
+  const rateColor = rate >= 75 ? SUCCESS : rate >= 45 ? AMBER : DANGER;
+
+  const attendUrl = useMemo(
+    () => `https://attend.cheden.app/live?session=${sessionToken}&sid=${service.id}`,
+    [sessionToken, service.id],
   );
 
-  function simulateScan(state: ScanState, member?: typeof MOCK_MEMBERS[0]) {
-    setScanState(state);
-    setScannedMember(member ?? null);
-    if (state === "success" && member) {
-      setCheckedInCount(c => c + 1);
-      setLiveFeed(prev => [{ name: member.name, time: new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }), initials: member.initials, color: member.color }, ...prev.slice(0, 4)]);
+  const statusMeta: Record<string, { label: string; color: string; bg: string; dot: string }> = {
+    idle: { label: "Not Started", color: MUTED, bg: "#F3F4F6", dot: MUTED },
+    active: { label: "Live · Active", color: "#15803D", bg: "#E9F9EF", dot: SUCCESS },
+    paused: { label: "Paused", color: "#B45309", bg: "#FDF3E3", dot: AMBER },
+    expired: { label: "Expired", color: "#B91C1C", bg: "#FDEBEB", dot: DANGER },
+  };
+  const sm = statusMeta[status];
+
+  // ── Actions ──
+  function startSession() {
+    setStatus("active");
+    setStartAt(Date.now());
+    setPausedRemaining(60 * 60);
+    setAccrued(0);
+    toast.success("Session is now live — scan away!");
+  }
+
+  function pauseSession() {
+    if (startAt == null) return;
+    const elapsed = (Date.now() - startAt) / 1000;
+    const remaining = Math.max(0, pausedRemaining - elapsed);
+    setAccrued(0);
+    setPausedRemaining(remaining);
+    setStatus("paused");
+    toast.info("Session paused");
+  }
+
+  function resumeSession() {
+    setStartAt(Date.now());
+    setStatus("active");
+    toast.success("Session resumed");
+  }
+
+  function regenerate() {
+    const seq = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const part = () => Array.from({ length: 4 }, () => seq[Math.floor(Math.random() * seq.length)]).join("");
+    setSessionToken(`SAT-${part()}-${part()}-${part()}`);
+    toast.success("QR code regenerated — previous link is now invalid");
+  }
+
+  function endSession() {
+    setStatus("expired");
+    setConfirmEnd(false);
+    setFullscreen(false);
+    toast.info("Session ended");
+  }
+
+  function copyToken() {
+    navigator.clipboard?.writeText(sessionToken);
+    toast.success("Session link copied to clipboard");
+  }
+
+  function downloadQR() {
+    const canvas = qrCanvasRef.current;
+    if (canvas) {
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `attendance-${service.id}.png`;
+      a.click();
+      toast.success("QR code downloaded");
     }
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => { setScanState("idle"); setScannedMember(null); }, 2500);
   }
 
-  function manualCheckIn(member: typeof MOCK_MEMBERS[0]) {
-    if (member.checkedIn) return;
-    simulateScan("success", member);
+  async function shareQR() {
+    const payload = { title: `ChurchEden Attendance · ${service.name}`, text: attendUrl };
+    if (navigator.share) {
+      try {
+        await navigator.share(payload);
+      } catch {
+        navigator.clipboard?.writeText(attendUrl);
+        toast.success("Link copied to clipboard");
+      }
+    } else {
+      navigator.clipboard?.writeText(attendUrl);
+      toast.success("Link copied to clipboard");
+    }
   }
 
-  const absent = 340 - checkedInCount;
+  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden", background: "#0A0A0A" }}>
-
-      {/* ── Top bar ── */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}>
-        {/* Logo + event */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: BRAND, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontFamily: "var(--font-label)", fontSize: 13, fontWeight: 800, color: "#fff" }}>GC</span>
+  // ── Skeleton ──
+  if (loading) {
+    return (
+      <div className="flex-1 overflow-y-auto px-5 sm:px-7 py-6" style={{ background: BG }}>
+        <div className="max-w-[1240px] mx-auto flex flex-col gap-5">
+          <div className="h-8 w-56 rounded-lg" style={{ background: "#E8E4DE" + "" }} />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="rounded-2xl" style={{ background: "#fff", border: `1px solid ${BORDER}`, height: 132 }} />
+            ))}
           </div>
-          <div>
-            <div style={{ fontFamily: "var(--font-label)", fontSize: 13, fontWeight: 700, color: "#fff" }}>Sunday Morning Service</div>
-            <div style={{ fontFamily: "var(--font-label)", fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Jun 4, 2026</div>
+          <div className="grid lg:grid-cols-3 gap-5">
+            <div className="lg:col-span-2 rounded-2xl" style={{ background: "#fff", border: `1px solid ${BORDER}`, height: 400 }} />
+            <div className="rounded-2xl" style={{ background: "#fff", border: `1px solid ${BORDER}`, height: 400 }} />
           </div>
-        </div>
-
-        {/* Center: mode toggle */}
-        <div style={{ display: "flex", background: "rgba(255,255,255,0.07)", borderRadius: 10, padding: 3, gap: 2 }}>
-          {([{ key: "scan" as Mode, icon: Camera, label: "Scan QR" }, { key: "manual" as Mode, icon: Search, label: "Manual Search" }]).map(m => (
-            <button key={m.key} onClick={() => { setMode(m.key); setScanState("idle"); }}
-              style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: mode === m.key ? "rgba(255,255,255,0.12)" : "transparent", color: mode === m.key ? "#fff" : "rgba(255,255,255,0.4)", fontFamily: "var(--font-label)", fontSize: 13, fontWeight: mode === m.key ? 700 : 400, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-              <m.icon size={14} />{m.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Right: counter + offline + end */}
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          {isOffline && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(245,158,11,0.15)", borderRadius: 99, padding: "5px 12px" }}>
-              <WifiOff size={13} color={WARN} />
-              <span style={{ fontFamily: "var(--font-label)", fontSize: 12, fontWeight: 600, color: WARN }}>Offline — syncing when connected</span>
-            </div>
-          )}
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontFamily: "var(--font-label)", fontSize: 22, fontWeight: 800, color: BRAND }}>{checkedInCount}</div>
-            <div style={{ fontFamily: "var(--font-label)", fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Checked In</div>
-          </div>
-          <button style={{ background: "transparent", border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: 99, padding: "7px 16px", fontFamily: "var(--font-label)", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.6)", cursor: "pointer" }}>
-            End Session
-          </button>
         </div>
       </div>
+    );
+  }
 
-      {/* ── Main content ── */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+  // ── Error ──
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center" style={{ background: BG }}>
+        <Card className="p-8 max-w-sm text-center">
+          <div className="mx-auto w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ background: "#FDEBEB" }}>
+            <AlertTriangle size={24} style={{ color: DANGER }} />
+          </div>
+          <h3 style={{ fontFamily: "var(--font-label)", fontSize: "16px", fontWeight: 700, color: INK }}>Couldn’t load live session</h3>
+          <p className="mt-1" style={{ fontFamily: "var(--font-label)", fontSize: "13px", color: MUTED }}>
+            We couldn’t reach the attendance service. Check your connection and try again.
+          </p>
+          <button
+            onClick={() => { setError(false); setLoading(true); setTimeout(() => setLoading(false), 700); }}
+            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl"
+            style={{ background: GOLD, color: "#fff", fontFamily: "var(--font-label)", fontSize: "13px", fontWeight: 700, border: "none", cursor: "pointer" }}
+          >
+            <RefreshCw size={15} /> Retry
+          </button>
+        </Card>
+      </div>
+    );
+  }
 
-        {/* SCAN MODE */}
-        {mode === "scan" && (
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20, padding: "24px" }}>
-
-            <ScanZone scanState={scanState} />
-
-            <div style={{ fontFamily: "var(--font-label)", fontSize: 13, color: "rgba(255,255,255,0.35)" }}>
-              Point camera at member's QR code
-            </div>
-
-            {/* Demo trigger buttons */}
-            <div style={{ display: "flex", gap: 8 }}>
-              <span style={{ fontFamily: "var(--font-label)", fontSize: 11, color: "rgba(255,255,255,0.25)", alignSelf: "center" }}>Simulate:</span>
-              <button onClick={() => simulateScan("success", MOCK_MEMBERS[0])} style={{ ...demoBtn(SUCCESS), display: "flex", alignItems: "center", gap: 5 }}><Check size={13} /> Success</button>
-              <button onClick={() => simulateScan("duplicate", MOCK_MEMBERS[1])} style={{ ...demoBtn(WARN), display: "flex", alignItems: "center", gap: 5 }}><AlertTriangle size={13} /> Duplicate</button>
-              <button onClick={() => simulateScan("notfound")} style={{ ...demoBtn(DANGER), display: "flex", alignItems: "center", gap: 5 }}><X size={13} /> Not Found</button>
-            </div>
-
-            {/* Checked-in card */}
-            <div style={{ width: "100%", maxWidth: 460 }}>
-              <CheckInCard member={scannedMember} scanState={scanState} />
+  // ── Fullscreen QR ──
+  if (fullscreen) {
+    return (
+      <div className="fixed inset-0 z-[90] flex items-center justify-center p-6" style={{ background: "linear-gradient(150deg,#10151F 0%,#0F1729 100%)" }}>
+        <button
+          onClick={() => setFullscreen(false)}
+          className="absolute top-5 right-5 flex items-center gap-2 px-4 py-2 rounded-xl"
+          style={{ background: "rgba(255,255,255,0.08)", color: "#E5E7EB", fontFamily: "var(--font-label)", fontSize: "13px", fontWeight: 600, border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}
+        >
+          <X size={16} /> Exit
+        </button>
+        <div className="text-center max-w-md">
+          <div className="flex items-center justify-center gap-2 mb-5">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(34,197,94,0.15)", color: "#4ADE80", fontFamily: "var(--font-label)", fontSize: "12px", fontWeight: 700 }}>
+              <span className="w-2 h-2 rounded-full" style={{ background: SUCCESS }} /> SCAN TO CHECK IN
+            </span>
+          </div>
+          <div className="mx-auto w-72 h-72 bg-white rounded-3xl p-5 flex items-center justify-center shadow-2xl">
+            <QRCodeCanvas ref={qrCanvasRef} value={attendUrl} size={248} bgColor="#FFFFFF" fgColor={NAVY} level="M" includeMargin />
+          </div>
+          <div className="mt-6" style={{ color: "#fff", fontFamily: "var(--font-label)" }}>
+            <div className="text-xl font-bold">{service.name}</div>
+            <div className="mt-1 text-sm" style={{ color: "#9CA3AF" }}>{service.date} · {service.time}</div>
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: "rgba(255,255,255,0.07)", fontFamily: "var(--font-label)", fontSize: "13px", color: "#E5E7EB" }}>
+              <Clock size={14} style={{ color: "#60A5FA" }} /> {countdown} left
             </div>
           </div>
-        )}
+        </div>
+      </div>
+    );
+  }
 
-        {/* MANUAL SEARCH MODE */}
-        {mode === "manual" && (
-          <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
-            <div style={{ maxWidth: 560, margin: "0 auto" }}>
-              {/* Search bar */}
-              <div style={{ position: "relative", marginBottom: 20 }}>
-                <Search size={18} color="rgba(255,255,255,0.3)" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)" }} />
-                <input
-                  autoFocus
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  placeholder="Search by name, phone, or member ID…"
-                  style={{ background: "rgba(255,255,255,0.07)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: 14, padding: "14px 16px 14px 48px", fontFamily: "var(--font-label)", fontSize: 15, color: "#fff", outline: "none", width: "100%", boxSizing: "border-box" as const }}
-                />
-              </div>
+  // ── Main layout ──
+  return (
+    <div className="flex-1 overflow-y-auto" style={{ background: BG }}>
+      <div className="px-5 sm:px-7 py-6">
+        <div className="max-w-[1240px] mx-auto flex flex-col gap-5">
+          {/* Page title */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "22px", fontWeight: 800, color: INK, letterSpacing: "-0.02em" }}>
+                QR Attendance
+              </h1>
+              <p className="mt-0.5" style={{ fontFamily: "var(--font-label)", fontSize: "13px", color: MUTED }}>
+                Control the live check-in session for each service.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full" style={{ background: sm.bg, color: sm.color, fontFamily: "var(--font-label)", fontSize: "12.5px", fontWeight: 700 }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: sm.dot, boxShadow: `0 0 0 3px ${sm.dot}22` }} />
+                {sm.label}
+              </span>
+              <button
+                onClick={() => setConfirmEnd(true)}
+                disabled={status === "idle"}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl disabled:opacity-50"
+                style={{ background: DANGER, color: "#fff", fontFamily: "var(--font-label)", fontSize: "13px", fontWeight: 700, border: "none", cursor: "pointer", transition: "opacity .15s" }}
+              >
+                <Power size={15} /> End Session
+              </button>
+            </div>
+          </div>
 
-              {/* Results */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {filteredMembers.map(m => (
-                  <div key={m.id} style={{ background: "rgba(255,255,255,0.05)", borderRadius: 14, border: "1px solid rgba(255,255,255,0.09)", padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                    <Avatar initials={m.initials} color={m.color} size={40} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: "var(--font-label)", fontSize: 14, fontWeight: 600, color: "#fff" }}>{m.name}</div>
-                      <div style={{ fontFamily: "var(--font-label)", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>{m.ministry} · {m.id}</div>
+          {/* Summary cards — separated box components with vector icons */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              icon={<Users size={18} />}
+              label="Registered"
+              value={registered.toLocaleString()}
+              sub={<span>Records awaiting check-in</span>}
+              accent={NAVY}
+            />
+            <StatCard
+              icon={<UserCheck size={18} />}
+              label="Present"
+              value={present}
+              sub={<span>{checkins.filter((c) => c.source === "QR").length} via QR · {checkins.filter((c) => c.source === "Manual").length} manual</span>}
+              accent="#2563EB"
+            />
+            <StatCard
+              icon={<TrendingUp size={18} />}
+              label="Attendance Rate"
+              value={<>{rate}%</>}
+              sub={
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 rounded-full" style={{ background: "#F0EEE9" }}>
+                    <div className="h-full rounded-full" style={{ width: `${rate}%`, background: rateColor }} />
+                  </div>
+                  <span style={{ color: rateColor, fontSize: "12px", fontWeight: 700 }}>{rate >= 75 ? "Great" : rate >= 45 ? "Fair" : "Low"}</span>
+                </div>
+              }
+              accent={rateColor}
+            />
+            <StatCard
+              icon={<Activity size={18} />}
+              label={status === "idle" ? "Session" : "Remaining Time"}
+              value={
+                status === "idle" ? (
+                  <span style={{ fontSize: "20px" }}>—</span>
+                ) : status === "expired" ? (
+                  "Ended"
+                ) : (
+                  <span className="tabular-nums">{countdown}</span>
+                )
+              }
+              sub={<span className="inline-flex items-center gap-1.5"><Clock size={12} /> 60-min auto expiry</span>}
+              accent={status === "expired" ? DANGER : GOLD}
+            />
+          </div>
+
+          {/* Main content grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Left: QR card */}
+            <Card className="lg:col-span-2 p-5 sm:p-6 flex flex-col gap-5">
+              <SectionTitle
+                action={
+                  <select
+                    value={service.id}
+                    onChange={(e) => setService(SERVICES.find((s) => s.id === e.target.value) ?? SERVICES[0])}
+                    className="rounded-xl"
+                    style={{
+                      fontFamily: "var(--font-label)", fontSize: "12.5px", fontWeight: 600, color: INK,
+                      padding: "8px 32px 8px 12px", border: `1px solid ${BORDER}`, background: "#FAFAF7",
+                      appearance: "none", WebkitAppearance: "none", cursor: "pointer", outline: "none",
+                    }}
+                  >
+                    {SERVICES.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                }
+              >
+                Live Check-in QR
+              </SectionTitle>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div
+                    className="relative p-5 rounded-3xl"
+                    style={{
+                      background: "#FFFFFF",
+                      border: `1.5px dashed ${status === "active" ? `${SUCCESS}99` : BORDER}`,
+                      boxShadow: "0 20px 45px rgba(15,23,41,0.12)",
+                    }}
+                  >
+                    <div className="p-3 bg-white">
+                      <QRCodeCanvas
+                        ref={qrCanvasRef}
+                        value={attendUrl}
+                        size={196}
+                        bgColor="#FFFFFF"
+                        fgColor={NAVY}
+                        level="M"
+                        includeMargin
+                      />
                     </div>
-                    {m.checkedIn ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(34,197,94,0.12)", borderRadius: 99, padding: "6px 14px" }}>
-                        <CheckCircle2 size={14} color={SUCCESS} />
-                        <span style={{ fontFamily: "var(--font-label)", fontSize: 12, fontWeight: 600, color: SUCCESS }}>Checked In {m.checkTime}</span>
-                      </div>
-                    ) : (
-                      <button onClick={() => manualCheckIn(m)}
-                        style={{ background: BRAND, border: "none", borderRadius: 99, padding: "8px 20px", fontFamily: "var(--font-label)", fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>
-                        Check In
-                      </button>
+                    {status === "active" && (
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full" style={{ background: SUCCESS, color: "#fff", fontFamily: "var(--font-label)", fontSize: "11px", fontWeight: 700, boxShadow: `0 4px 12px ${SUCCESS}55` }}>
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#fff" }} /> LIVE
+                      </span>
                     )}
+                  </div>
+                  <div className="text-center">
+                    <div style={{ fontFamily: "var(--font-label)", fontSize: "13px", fontWeight: 700, color: INK }}>{service.name}</div>
+                    <div className="mt-0.5 inline-flex items-center gap-3" style={{ fontFamily: "var(--font-label)", fontSize: "12px", color: MUTED }}>
+                      <span className="inline-flex items-center gap-1"><CalendarDays size={12} /> {service.date}</span>
+                      <span className="inline-flex items-center gap-1"><Clock size={12} /> {service.time}</span>
+                      <span className="inline-flex items-center gap-1"><MapPin size={12} /> {service.location}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <ActionBtn icon={<Maximize2 size={15} />} label="Full Screen" onClick={() => setFullscreen(true)} />
+                    <ActionBtn icon={<Download size={15} />} label="Download" onClick={downloadQR} />
+                    <ActionBtn icon={<Share2 size={15} />} label="Share" onClick={shareQR} />
+                  </div>
+                  <div className="rounded-xl p-3.5 flex items-start gap-3" style={{ background: "#F7F6F2", border: `1px solid ${BORDER}` }}>
+                    <ShieldCheck size={16} className="mt-0.5 flex-shrink-0" style={{ color: GOLD }} />
+                    <p style={{ fontFamily: "var(--font-label)", fontSize: "12px", color: BODY, lineHeight: 1.5 }}>
+                      Members scan this code (or open the attend link) at the door to be counted into the service automatically.
+                    </p>
+                  </div>
+                  <SessionControls
+                    status={status}
+                    onStart={startSession}
+                    onPause={pauseSession}
+                    onResume={resumeSession}
+                    onRegenerate={regenerate}
+                  />
+                </div>
+              </div>
+            </Card>
+
+            {/* Right: Session Controls + summary */}
+            <div className="flex flex-col gap-5">
+              <Card className="p-5 flex flex-col gap-4">
+                <SectionTitle>Attendance Summary</SectionTitle>
+                <div className="flex flex-col gap-3.5">
+                  <SummaryRow label="Registered" value={registered} icon={<Users size={15} />} />
+                  <SummaryRow label="Checked in" value={present} icon={<UserCheck size={15} />} />
+                  <SummaryRow label="Awaiting" value={Math.max(0, registered - present)} icon={<Activity size={15} />} />
+                  <SummaryRow label="Attendance rate" value={`${rate}%`} icon={<TrendingUp size={15} />} accent />
+                </div>
+                <div className="mt-1 h-2 rounded-full overflow-hidden" style={{ background: "#F0EEE9" }}>
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: `${rate}%`, background: `linear-gradient(90deg, ${GOLD} 0%, #D99A20 100%)` }} />
+                </div>
+              </Card>
+
+              <Card className="p-5">
+                <SectionTitle>Session Controls</SectionTitle>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {status === "idle" && <PrimaryBtn icon={<Play size={15} />} label="Start Session" onClick={startSession} full />}
+                  {status === "active" && <GoldGhostBtn icon={<Pause size={15} />} label="Pause" onClick={pauseSession} />}
+                  {status === "paused" && <PrimaryBtn icon={<Play size={15} />} label="Resume" onClick={resumeSession} />}
+                  {(status === "active" || status === "paused") && <ToneBtn icon={<RotateCcw size={15} />} label="Regenerate QR" onClick={regenerate} />}
+                  {status === "expired" && <PrimaryBtn icon={<Play size={15} />} label="Start New Session" onClick={startSession} full />}
+                  <ToneBtn icon={<Copy size={15} />} label="Copy Link" onClick={copyToken} />
+                </div>
+                <div className="mt-3 pt-3 flex items-center justify-center gap-1.5" style={{ borderTop: `1px solid ${BORDER}` }}>
+                  <span className="w-2 h-2 rounded-full" style={{ background: sm.dot }} />
+                  <span style={{ fontFamily: "var(--font-label)", fontSize: "12px", color: MUTED }}>
+                    {status === "idle" && "Ready to go live"}
+                    {status === "active" && "Members can check in now"}
+                    {status === "paused" && "Check-ins temporarily on hold"}
+                    {status === "expired" && "Session closed"}
+                  </span>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* Bottom grid: Recent check-ins + Session info + Tips */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <Card className="lg:col-span-2 p-5 sm:p-6">
+              <SectionTitle
+                action={
+                  <button className="text-xs font-semibold" style={{ fontFamily: "var(--font-label)", color: GOLD, background: "none", border: "none", cursor: "pointer" }}>
+                    View all
+                  </button>
+                }
+              >
+                Recent Check-ins
+              </SectionTitle>
+              <div className="flex flex-col divide-y" style={{ borderColor: "#F3F1EC" }}>
+                {checkins.slice(0, 6).map((c) => (
+                  <div key={c.id} className="flex items-center gap-3 py-3">
+                    <Avatar initials={c.initials} color={c.color} size={38} />
+                    <div className="min-w-0 flex-1">
+                      <div style={{ fontFamily: "var(--font-label)", fontSize: "13.5px", fontWeight: 600, color: INK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
+                      <div style={{ fontFamily: "var(--font-label)", fontSize: "11.5px", color: MUTED }}>{c.id}</div>
+                    </div>
+                    <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full" style={{ background: c.source === "QR" ? "#EAF4FF" : "#F7F6F2", color: c.source === "QR" ? "#1D4ED8" : MUTED, fontFamily: "var(--font-label)", fontSize: "11px", fontWeight: 600 }}>
+                      <QrCodeIcon size={11} /> {c.source}
+                    </span>
+                    <span style={{ fontFamily: "var(--font-label)", fontSize: "12px", color: MUTED, fontVariantNumeric: "tabular-nums" }}>{c.time}</span>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        )}
-      </div>
+            </Card>
 
-      {/* ── Bottom panel ── */}
-      <div style={{ background: "#111", borderTop: "1px solid rgba(255,255,255,0.07)", padding: "14px 24px", flexShrink: 0 }}>
-        <div style={{ display: "flex", gap: 0, alignItems: "stretch" }}>
-          {/* Stats */}
-          <div style={{ display: "flex", gap: 24, paddingRight: 24, borderRight: "1px solid rgba(255,255,255,0.08)" }}>
-            {[
-              { label: "Expected", value: "340", color: "rgba(255,255,255,0.6)" },
-              { label: "Checked In", value: String(checkedInCount), color: BRAND },
-              { label: "Absent", value: String(absent), color: "rgba(255,255,255,0.25)" },
-            ].map(s => (
-              <div key={s.label} style={{ textAlign: "center" }}>
-                <div style={{ fontFamily: "var(--font-label)", fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
-                <div style={{ fontFamily: "var(--font-label)", fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Live feed */}
-          <div style={{ flex: 1, paddingLeft: 24, overflow: "hidden" }}>
-            <div style={{ fontFamily: "var(--font-label)", fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Recent Check-ins</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {liveFeed.slice(0, 4).map((entry, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, opacity: 1 - i * 0.18, animation: i === 0 ? "slideInFeed 0.3s ease-out" : "none" }}>
-                  <div style={{ width: 20, height: 20, borderRadius: "50%", background: `${entry.color}30`, border: `1.5px solid ${entry.color}60`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontFamily: "var(--font-label)", fontSize: 7, fontWeight: 700, color: entry.color }}>{entry.initials}</span>
+            <div className="flex flex-col gap-5">
+              {/* Session Information */}
+              <Card className="p-5">
+                <SectionTitle>Session Info</SectionTitle>
+                <div className="flex flex-col gap-2.5 text-sm">
+                  {[
+                    { label: "Service", value: service.name },
+                    { label: "Session ID", value: `SES-${sessionToken.slice(-4)}${service.id.slice(-2)}` },
+                  ].map((r) => (
+                    <div key={r.label} className="flex items-center justify-between">
+                      <span style={{ fontFamily: "var(--font-label)", fontSize: "12px", color: MUTED }}>{r.label}</span>
+                      <span style={{ fontFamily: "var(--font-label)", fontSize: "12.5px", fontWeight: 600, color: INK }}>{r.value}</span>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between">
+                    <span style={{ fontFamily: "var(--font-label)", fontSize: "12px", color: MUTED }}>Session Token</span>
+                    <button onClick={copyToken} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg" style={{ fontFamily: "var(--font-label)", fontSize: "11.5px", fontWeight: 600, color: DIALOG_BODY, background: "#F5F4EF", border: `1px solid ${BORDER}`, cursor: "pointer" }}>
+                      <Copy size={11} /> <span className="tabular-nums">{sessionToken.slice(0, 4)}····{sessionToken.slice(-4)}</span>
+                    </button>
                   </div>
-                  <span style={{ fontFamily: "var(--font-label)", fontSize: 12, color: "rgba(255,255,255,0.7)" }}>{entry.name}</span>
-                  <span style={{ fontFamily: "var(--font-label)", fontSize: 11, color: "rgba(255,255,255,0.3)", marginLeft: "auto" }}>{entry.time}</span>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="mt-4 rounded-xl px-3.5 py-3" style={{ background: "#FDF6E9", border: `1px solid #F3E3BE` }}>
+                  <p style={{ fontFamily: "var(--font-label)", fontSize: "11.5px", color: "#8A6A18", lineHeight: 1.5 }}>
+                    The attend link is scannable by any camera app — no app install required.
+                  </p>
+                </div>
+              </Card>
 
-          {/* Guest button */}
-          <div style={{ paddingLeft: 24, borderLeft: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center" }}>
-            <button onClick={() => setShowGuest(true)}
-              style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.07)", border: "1.5px solid rgba(255,255,255,0.12)", borderRadius: 99, padding: "10px 18px", fontFamily: "var(--font-label)", fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.7)", cursor: "pointer" }}>
-              <UserPlus size={15} />Log Guest
-            </button>
+              {/* Quick tips */}
+              <Card className="p-5">
+                <SectionTitle><span className="inline-flex items-center gap-2"><Lightbulb size={16} style={{ color: GOLD }} /> Quick Tips</span></SectionTitle>
+                <div className="flex flex-col gap-3.5">
+                  {QUICK_TIPS.map((t) => (
+                    <div key={t.title} className="flex gap-2.5">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${GOLD}12` }}>
+                        <span style={{ color: GOLD }}>{t.icon}</span>
+                      </div>
+                      <div>
+                        <div style={{ fontFamily: "var(--font-label)", fontSize: "12.5px", fontWeight: 700, color: INK }}>{t.title}</div>
+                        <div style={{ fontFamily: "var(--font-label)", fontSize: "11.5px", color: MUTED, lineHeight: 1.45 }}>{t.text}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
           </div>
         </div>
       </div>
 
-      {showGuest && <GuestModal onClose={() => setShowGuest(false)} />}
+      {/* End Session confirmation */}
+      <FormDialog
+        open={confirmEnd}
+        onClose={() => setConfirmEnd(false)}
+        icon={<Power size={20} style={{ color: DANGER }} />}
+        title="End this attendance session?"
+        description="The QR and attend link will stop working. Members who haven’t checked in yet won’t be counted."
+        maxWidth="max-w-md"
+        primaryButton={{ label: "End Session", onClick: endSession, icon: <Power size={15} /> }}
+      >
+        <div className="px-6 sm:px-7 py-5" style={{ fontFamily: "var(--font-label)", fontSize: "13px", color: "var(--color-body, #4B5563)", lineHeight: 1.6 }}>
+          This will close the live session for <strong style={{ color: DIALOG_BODY }}>{service.name}</strong> and expire
+          the {present} recorded check-ins. You can start a new session anytime.
+        </div>
+      </FormDialog>
 
-      <style>{`
-        @keyframes scanLine {
-          0% { top: 10%; }
-          50% { top: 85%; }
-          100% { top: 10%; }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideInFeed {
-          from { opacity: 0; transform: translateY(-8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
+      <Toaster
+        position="bottom-right"
+        richColors
+        toastOptions={{
+          style: {
+            fontFamily: "var(--font-label)",
+            borderRadius: "12px",
+            border: "1px solid #EDEAE6",
+            boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
+          },
+        }}
+      />
     </div>
   );
 }
 
-function demoBtn(color: string): React.CSSProperties {
-  return {
-    background: `${color}18`,
-    border: `1.5px solid ${color}40`,
-    borderRadius: 99,
-    padding: "6px 14px",
-    fontFamily: "var(--font-label)",
-    fontSize: 12,
-    fontWeight: 600,
-    color,
-    cursor: "pointer",
-  };
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function ActionBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center justify-center gap-1.5 rounded-xl py-3"
+      style={{ background: "#FAFAF7", border: `1px solid ${BORDER}`, color: INK, fontFamily: "var(--font-label)", fontSize: "11.5px", fontWeight: 600, cursor: "pointer", transition: "background .15s,border-color .15s" }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function PrimaryBtn({ icon, label, onClick, full }: { icon: React.ReactNode; label: string; onClick: () => void; full?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl py-2.5 ${full ? "col-span-2" : ""}`}
+      style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #D99A20 100%)`, color: "#fff", fontFamily: "var(--font-label)", fontSize: "13px", fontWeight: 700, border: "none", cursor: "pointer", boxShadow: `0 6px 16px ${GOLD}30` }}
+    >
+      {icon} {label}
+    </button>
+  );
+}
+
+function GoldGhostBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center justify-center gap-2 rounded-xl py-2.5"
+      style={{ background: `${GOLD}10`, color: GOLD, fontFamily: "var(--font-label)", fontSize: "13px", fontWeight: 700, border: `1.5px solid ${GOLD}40`, cursor: "pointer" }}
+    >
+      {icon} {label}
+    </button>
+  );
+}
+
+function ToneBtn({ icon, label, onClick, full }: { icon: React.ReactNode; label: string; onClick: () => void; full?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl py-2.5 ${full ? "col-span-2" : ""}`}
+      style={{ background: "#FFFFFF", color: DIALOG_BODY, fontFamily: "var(--font-label)", fontSize: "13px", fontWeight: 600, border: `1px solid ${BORDER}`, cursor: "pointer" }}
+    >
+      {icon} {label}
+    </button>
+  );
+}
+
+function SessionControls({
+  status,
+  onStart,
+  onPause,
+  onResume,
+  onRegenerate,
+}: {
+  status: "idle" | "active" | "paused" | "expired";
+  onStart: () => void;
+  onPause: () => void;
+  onResume: () => void;
+  onRegenerate: () => void;
+}) {
+  const active = status === "active" || status === "paused";
+  return (
+    <div className="grid grid-cols-2 gap-2.5">
+      {status === "idle" && <PrimaryBtn icon={<Play size={15} />} label="Start Session" onClick={onStart} full />}
+      {status === "active" && <GoldGhostBtn icon={<Pause size={15} />} label="Pause" onClick={onPause} />}
+      {status === "paused" && <PrimaryBtn icon={<Play size={15} />} label="Resume" onClick={onResume} />}
+      {active && <ToneBtn icon={<RotateCcw size={15} />} label="Regenerate" onClick={onRegenerate} />}
+      {(status === "idle" || status === "expired") && (
+        <ToneBtn icon={<RotateCcw size={15} />} label="New QR" onClick={onRegenerate} />
+      )}
+    </div>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  icon,
+  accent,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+  accent?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="inline-flex items-center gap-2" style={{ fontFamily: "var(--font-label)", fontSize: "12.5px", color: MUTED, fontWeight: 500 }}>
+        <span style={{ color: accent ? GOLD : MUTED }}>{icon}</span>
+        {label}
+      </span>
+      <span style={{ fontFamily: "var(--font-label)", fontSize: "14px", fontWeight: 700, color: accent ? GOLD : INK }}>{value}</span>
+    </div>
+  );
 }

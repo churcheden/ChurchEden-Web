@@ -5,6 +5,7 @@ import {
   Copy, Plus, Maximize2, ChevronLeft, ChevronRight,
   ToggleLeft, ToggleRight, SlidersHorizontal,
   Smartphone, CreditCard, Banknote, Receipt, Landmark,
+  Wallet, TrendingUp, Clock, XCircle, ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
@@ -515,10 +516,34 @@ export function TransactionsPage() {
   }
 
   const stats = [
-    { label: "Today's Volume", value: "GHS 4,200", color: DARK },
-    { label: "This Week", value: "GHS 18,700", color: DARK },
-    { label: "Pending", value: "3", color: "#92610A", bg: "rgba(200,134,10,0.09)" },
-    { label: "Failed", value: "1", color: "#B91C1C", bg: "rgba(185,28,28,0.09)" },
+    {
+      label: "Today's Volume",
+      value: "GHS 4,200",
+      icon: <Wallet size={18} />,
+      accent: DARK,
+      trend: <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#15803D", fontWeight: 700 }}><ArrowUpRight size={12} /> 12% vs yesterday</span>,
+    },
+    {
+      label: "This Week",
+      value: "GHS 18,700",
+      icon: <TrendingUp size={18} />,
+      accent: BRAND,
+      trend: <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#15803D", fontWeight: 700 }}><ArrowUpRight size={12} /> 8% vs last week</span>,
+    },
+    {
+      label: "Pending",
+      value: "3",
+      icon: <Clock size={18} />,
+      accent: "#B45309",
+      trend: <span style={{ color: "#9CA3AF" }}>Awaiting confirmation</span>,
+    },
+    {
+      label: "Failed",
+      value: "1",
+      icon: <XCircle size={18} />,
+      accent: "#B91C1C",
+      trend: <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "#B91C1C", fontWeight: 700 }}><ArrowDownRight size={12} /> 2 fewer this week</span>,
+    },
   ];
 
   const COLS: { key: SortCol | ""; label: string; sortable?: boolean; width?: number }[] = [
@@ -560,12 +585,21 @@ export function TransactionsPage() {
           </div>
         </div>
 
-        {/* Stats strip */}
-        <div style={{ display: "flex", gap: 0, borderTop: "1px solid #F3F4F6" }}>
-          {stats.map((s, i) => (
-            <div key={s.label} style={{ padding: "12px 24px 12px 0", borderRight: i < stats.length - 1 ? "1px solid #F3F4F6" : "none", marginRight: 24 }}>
-              <div style={{ fontFamily: "var(--font-label)", fontSize: 24, fontWeight: 800, color: s.color ?? DARK, background: s.bg, borderRadius: 8, padding: s.bg ? "0 10px" : 0, display: "inline-block" }}>{s.value}</div>
-              <div style={{ fontFamily: "var(--font-label)", fontSize: 11, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 2 }}>{s.label}</div>
+      </div>
+
+      {/* ── Summary cards ── */}
+      <div style={{ padding: "18px 24px 0", flexShrink: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 14 }}>
+          {stats.map((s) => (
+            <div key={s.label} style={{ background: "#fff", border: "1px solid #EDEAE6", borderRadius: 16, padding: "16px 18px", boxShadow: "0 1px 2px rgba(15,23,41,0.04)", display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontFamily: "var(--font-label)", fontSize: 12, fontWeight: 600, color: "#9CA3AF" }}>{s.label}</span>
+                <div style={{ width: 38, height: 38, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", background: `${s.accent}14` }}>
+                  <span style={{ color: s.accent }}>{s.icon}</span>
+                </div>
+              </div>
+              <div style={{ fontFamily: "var(--font-label)", fontSize: 24, fontWeight: 800, color: s.accent === "#B91C1C" ? s.accent : DARK, letterSpacing: "-0.02em", lineHeight: 1.1 }}>{s.value}</div>
+              <div style={{ fontFamily: "var(--font-label)", fontSize: 12, color: "#9CA3AF" }}>{s.trend}</div>
             </div>
           ))}
         </div>

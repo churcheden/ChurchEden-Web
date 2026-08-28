@@ -48,10 +48,32 @@ function SaveButton() {
   );
 }
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+const sectionIcons: Record<string, LucideIcon> = {
+  "General Settings": Settings,
+  "Contact Information": Phone,
+  "Church Logo": Church,
+  "Language & Region": Globe,
+  "System Notification Defaults": Bell,
+  "Current Plan": CreditCard,
+  "Two-Factor Authentication": Shield,
+  "Data Export": Database,
+};
+
+function SectionCard({ title, children, icon }: { title: string; children: React.ReactNode; icon?: React.ReactNode }) {
+  const IconCmp = icon ? null : sectionIcons[title] ?? null;
+  const hasIcon = Boolean(icon || IconCmp);
   return (
     <div className="rounded-2xl p-6 mb-5" style={{ background: "#fff", border: "1px solid #EEEDE8" }}>
-      <h3 style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)", marginBottom: "20px" }}>{title}</h3>
+      <div className={`flex items-center ${hasIcon ? "" : "mb-5"} gap-3`}>
+        {hasIcon && (
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(200,134,10,0.10)" }}>
+            <span style={{ color: BRAND }}>{icon ?? (IconCmp ? <IconCmp size={18} /> : null)}</span>
+          </div>
+        )}
+        <h3 style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)", margin: 0 }}>
+          {title}
+        </h3>
+      </div>
       {children}
     </div>
   );
