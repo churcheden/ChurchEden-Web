@@ -106,6 +106,7 @@ export function LandingHero() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/demo")}
                 id="hero-watch-demo"
                 className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-7 py-3.5 text-base font-semibold text-[#0F172A] transition-all hover:border-slate-400 hover:bg-slate-50 shadow-sm"
               >

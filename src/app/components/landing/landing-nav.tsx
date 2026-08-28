@@ -7,9 +7,8 @@ import churchedenFavicon from "@/assets/churcheden_favicon.png";
 
 const NAV_LINKS = [
   { label: "Product", href: "#", hasDropdown: true },
-  { label: "Solutions", href: "#", hasDropdown: true },
   { label: "Pricing", href: "/pricing", hasDropdown: false },
-  { label: "Resources", href: "#", hasDropdown: true },
+  { label: "Resources", href: "#", hasDropdown: false },
   { label: "About Us", href: "/about", hasDropdown: false },
 ];
 
