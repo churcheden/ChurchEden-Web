@@ -7,7 +7,7 @@ import churchedenFavicon from "@/assets/churcheden_favicon.png";
 
 const NAV_LINKS = [
   { label: "Home", href: "/", hasDropdown: false },
-  { label: "Pricing", href: "#", hasDropdown: false },
+  { label: "Pricing", href: "/pricing", hasDropdown: false },
   { label: "Resources", href: "#", hasDropdown: true },
   { label: "About Us", href: "#", hasDropdown: false },
 ];
@@ -47,6 +47,8 @@ export function LandingNav() {
                 if (link.href === "/") {
                   navigate("/");
                   window.scrollTo({ top: 0, behavior: "smooth" });
+                } else if (link.href !== "#") {
+                  navigate(link.href);
                 }
               }}
               className="flex items-center gap-1 text-sm font-medium text-slate-600 transition-colors hover:text-[#0F172A]"
@@ -108,6 +110,9 @@ export function LandingNav() {
                     if (link.href === "/") {
                       navigate("/");
                       window.scrollTo({ top: 0, behavior: "smooth" });
+                      setMobileOpen(false);
+                    } else if (link.href !== "#") {
+                      navigate(link.href);
                       setMobileOpen(false);
                     }
                   }}
