@@ -75,7 +75,7 @@ export function LandingNav() {
         {/* Right CTAs — desktop */}
         <div className="hidden items-center gap-3 lg:flex">
           <button
-            onClick={() => navigate("/onboarding/signin")}
+            onClick={() => navigate("/onboarding/sign-in")}
             className="rounded-lg border border-[#0F172A]/20 px-5 py-2 text-sm font-medium text-[#0F172A] transition-all hover:bg-slate-50"
           >
             Log in
@@ -143,7 +143,7 @@ export function LandingNav() {
               <div className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3">
                 <button
                   onClick={() => {
-                    navigate("/onboarding/signin");
+                    navigate("/onboarding/sign-in");
                     setMobileOpen(false);
                   }}
                   className="w-full rounded-lg border border-[#0F172A]/20 py-2.5 text-sm font-medium text-[#0F172A]"

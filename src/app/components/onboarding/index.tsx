@@ -10,13 +10,14 @@ export function OnboardingFlow() {
   return (
     <OnboardingProvider>
       <Routes>
-        <Route index element={<Navigate to="welcome" replace />} />
+        <Route index element={<Navigate to="/onboarding/welcome" replace />} />
         <Route path="welcome" element={<WelcomeStep />} />
         <Route path="sign-in" element={<SignInStep />} />
+        <Route path="signin" element={<SignInStep />} />
         <Route path="verify-email" element={<VerifyEmailStep />} />
         <Route path="church-profile" element={<ChurchProfileStep />} />
         <Route path="complete" element={<SetupCompleteStep />} />
-        <Route path="*" element={<Navigate to="welcome" replace />} />
+        <Route path="*" element={<Navigate to="/onboarding/welcome" replace />} />
       </Routes>
     </OnboardingProvider>
   );
