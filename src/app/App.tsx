@@ -6,6 +6,7 @@ import { LandingPage } from "@/app/components/landing/landing-page";
 import { PricingPage } from "@/app/components/landing/pricing-page";
 import { AboutPage } from "@/app/components/about/about-page";
 import { DemoPage } from "@/app/components/demo/demo-page";
+import { ResourcesPage } from "@/app/components/resources/resources-page";
 import { OnboardingFlow } from "@/app/components/onboarding";
 import { Dashboard } from "@/app/components/dashboard";
 
@@ -16,6 +17,7 @@ export default function App() {
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/demo" element={<DemoPage />} />
+      <Route path="/resources" element={<ResourcesPage />} />
       <Route path="/onboarding/*" element={<OnboardingFlow />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
