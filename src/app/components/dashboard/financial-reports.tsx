@@ -8,7 +8,9 @@ import {
   ChevronRight, Download, Mail, AlertTriangle, Check, X,
   Upload, RefreshCcw, FileText, Filter, Edit3, Trash2,
   ArrowUpRight, ArrowDownRight, Landmark, Wifi,
+  RadioTower, Bus, Globe, BarChart3, ClipboardList, Search, Briefcase, Users,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -62,11 +64,11 @@ const EXPENSES: Expense[] = [
   { id: "EXP-047", category: "Miscellaneous", description: "Stationery & printing", recordedBy: "Sis. Ama Boateng", date: "May 28, 2026", amount: 120, status: "Approved" },
 ];
 
-const BUDGET_GOALS = [
-  { icon: "🏛", label: "Building Fund", pct: 72, current: 72000, goal: 100000 },
-  { icon: "📡", label: "Media Equipment", pct: 28, current: 1400, goal: 5000 },
-  { icon: "🚐", label: "Church Bus", pct: 45, current: 13500, goal: 30000 },
-  { icon: "🌍", label: "Outreach Fund", pct: 61, current: 6100, goal: 10000 },
+const BUDGET_GOALS: { icon: LucideIcon; label: string; pct: number; current: number; goal: number }[] = [
+  { icon: Landmark, label: "Building Fund", pct: 72, current: 72000, goal: 100000 },
+  { icon: RadioTower, label: "Media Equipment", pct: 28, current: 1400, goal: 5000 },
+  { icon: Bus, label: "Church Bus", pct: 45, current: 13500, goal: 30000 },
+  { icon: Globe, label: "Outreach Fund", pct: 61, current: 6100, goal: 10000 },
 ];
 
 const BUDGET_ENVELOPES = [
@@ -78,12 +80,12 @@ const BUDGET_ENVELOPES = [
   { category: "Maintenance & Repairs", budget: 1500, spent: 700, period: "Monthly" },
 ];
 
-const REPORTS = [
-  { name: "Monthly Giving Summary", desc: "Giving breakdown for current month by type & ministry", icon: "📊" },
-  { name: "Annual Financial Statement", desc: "Full year income, expenses, and net surplus", icon: "📋" },
-  { name: "Expense Audit Report", desc: "All expenses with status and approval trail", icon: "🔍" },
-  { name: "Ministry Budget Report", desc: "Budget vs actual per ministry for current period", icon: "💼" },
-  { name: "Donor / Contributor Report", desc: "Top contributors ranked by giving amount", icon: "👥" },
+const REPORTS: { name: string; desc: string; icon: LucideIcon }[] = [
+  { name: "Monthly Giving Summary", desc: "Giving breakdown for current month by type & ministry", icon: BarChart3 },
+  { name: "Annual Financial Statement", desc: "Full year income, expenses, and net surplus", icon: ClipboardList },
+  { name: "Expense Audit Report", desc: "All expenses with status and approval trail", icon: Search },
+  { name: "Ministry Budget Report", desc: "Budget vs actual per ministry for current period", icon: Briefcase },
+  { name: "Donor / Contributor Report", desc: "Top contributors ranked by giving amount", icon: Users },
 ];
 
 const REPORT_HISTORY = [
@@ -492,7 +494,7 @@ function OverviewTab() {
               }}>
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{g.icon}</div>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center" }}><g.icon size={18} color="#fff" /></div>
                     <div>
                       <div style={{ fontFamily: "var(--font-label)", fontSize: 14, fontWeight: 700, color: "#fff" }}>{g.label}</div>
                       <div style={{ fontFamily: "var(--font-label)", fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
@@ -628,7 +630,7 @@ function ExpensesTab() {
                     </td>
                     <td style={{ padding: "10px 14px", fontFamily: "var(--font-label)", fontSize: 12, color: DARK, maxWidth: 160 }}>
                       <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>{exp.description}</div>
-                      {needsApproval && <div style={{ fontFamily: "var(--font-label)", fontSize: 10, color: "#92610A", marginTop: 1 }}>⚠ Requires approval (≥ GHS 500)</div>}
+                      {needsApproval && <div style={{ fontFamily: "var(--font-label)", fontSize: 10, color: "#92610A", marginTop: 1, display: "flex", alignItems: "center", gap: 3 }}><AlertTriangle size={11} /> Requires approval (≥ GHS 500)</div>}
                     </td>
                     <td style={{ padding: "10px 14px", fontFamily: "var(--font-label)", fontSize: 11, color: "#9CA3AF", whiteSpace: "nowrap" as const }}>{exp.recordedBy.split(" ").slice(0, 2).join(" ")}</td>
                     <td style={{ padding: "10px 14px", fontFamily: "var(--font-label)", fontSize: 12, color: "#6B7280", whiteSpace: "nowrap" as const }}>{exp.date}</td>
@@ -812,7 +814,7 @@ function ReportsTab() {
               <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", borderRadius: 12, border: "1px solid #EBEBEB", background: "#FAFAFA" }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = BRAND; e.currentTarget.style.background = `rgba(200,134,10,0.03)`; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = "#EBEBEB"; e.currentTarget.style.background = "#FAFAFA"; }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: `rgba(200,134,10,0.10)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{r.icon}</div>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: `rgba(200,134,10,0.10)`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><r.icon size={18} color={BRAND} /></div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: "var(--font-label)", fontSize: 14, fontWeight: 600, color: DARK }}>{r.name}</div>
                   <div style={{ fontFamily: "var(--font-label)", fontSize: 12, color: "#9CA3AF" }}>{r.desc}</div>

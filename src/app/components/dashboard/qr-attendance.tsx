@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   X, Search, UserPlus, Wifi, WifiOff, ChevronDown,
-  QrCode, Users, CheckCircle2, Clock, AlertTriangle,
+  QrCode, Users, CheckCircle2, Clock, AlertTriangle, Check, Camera,
 } from "lucide-react";
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ function CheckInCard({ member, scanState }: {
   const isLate = false; // would check against service start time
 
   const stateConfig = {
-    success: { label: `✓ Checked In — ${new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`, color: SUCCESS, bg: "rgba(34,197,94,0.12)" },
+    success: { label: `Checked In — ${new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`, color: SUCCESS, bg: "rgba(34,197,94,0.12)" },
     duplicate: { label: `Already checked in at ${member.checkTime}`, color: WARN, bg: "rgba(245,158,11,0.10)" },
     notfound: { label: "Member not found — Try manual search", color: DANGER, bg: "rgba(239,68,68,0.10)" },
     idle: { label: "", color: "", bg: "" },
@@ -308,10 +308,10 @@ export function QRAttendancePage() {
 
         {/* Center: mode toggle */}
         <div style={{ display: "flex", background: "rgba(255,255,255,0.07)", borderRadius: 10, padding: 3, gap: 2 }}>
-          {([{ key: "scan" as Mode, icon: "📷", label: "Scan QR" }, { key: "manual" as Mode, icon: "🔍", label: "Manual Search" }]).map(m => (
+          {([{ key: "scan" as Mode, icon: Camera, label: "Scan QR" }, { key: "manual" as Mode, icon: Search, label: "Manual Search" }]).map(m => (
             <button key={m.key} onClick={() => { setMode(m.key); setScanState("idle"); }}
               style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: mode === m.key ? "rgba(255,255,255,0.12)" : "transparent", color: mode === m.key ? "#fff" : "rgba(255,255,255,0.4)", fontFamily: "var(--font-label)", fontSize: 13, fontWeight: mode === m.key ? 700 : 400, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-              <span>{m.icon}</span>{m.label}
+              <m.icon size={14} />{m.label}
             </button>
           ))}
         </div>
@@ -350,9 +350,9 @@ export function QRAttendancePage() {
             {/* Demo trigger buttons */}
             <div style={{ display: "flex", gap: 8 }}>
               <span style={{ fontFamily: "var(--font-label)", fontSize: 11, color: "rgba(255,255,255,0.25)", alignSelf: "center" }}>Simulate:</span>
-              <button onClick={() => simulateScan("success", MOCK_MEMBERS[0])} style={demoBtn(SUCCESS)}>✓ Success</button>
-              <button onClick={() => simulateScan("duplicate", MOCK_MEMBERS[1])} style={demoBtn(WARN)}>⚠ Duplicate</button>
-              <button onClick={() => simulateScan("notfound")} style={demoBtn(DANGER)}>✗ Not Found</button>
+              <button onClick={() => simulateScan("success", MOCK_MEMBERS[0])} style={{ ...demoBtn(SUCCESS), display: "flex", alignItems: "center", gap: 5 }}><Check size={13} /> Success</button>
+              <button onClick={() => simulateScan("duplicate", MOCK_MEMBERS[1])} style={{ ...demoBtn(WARN), display: "flex", alignItems: "center", gap: 5 }}><AlertTriangle size={13} /> Duplicate</button>
+              <button onClick={() => simulateScan("notfound")} style={{ ...demoBtn(DANGER), display: "flex", alignItems: "center", gap: 5 }}><X size={13} /> Not Found</button>
             </div>
 
             {/* Checked-in card */}

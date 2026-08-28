@@ -5,6 +5,7 @@ import {
   Facebook, Instagram, Youtube, Twitter, X, Phone, Mail,
   MapPin, Clock, ToggleLeft, ToggleRight,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 const BRAND = "#C8860A";
 const DARK = "#1A1A2E";
@@ -19,15 +20,15 @@ type SettingsSection =
   | "Security"
   | "Data & Backups";
 
-const navItems: { icon: string; label: SettingsSection }[] = [
-  { icon: "⚙️", label: "General" },
-  { icon: "🏛", label: "Church Profile" },
-  { icon: "🎨", label: "Branding & Theme" },
-  { icon: "🌍", label: "Language & Region" },
-  { icon: "🔔", label: "Notifications" },
-  { icon: "💳", label: "Billing & Plan" },
-  { icon: "🔒", label: "Security" },
-  { icon: "📂", label: "Data & Backups" },
+const navItems: { icon: LucideIcon; label: SettingsSection }[] = [
+  { icon: Settings, label: "General" },
+  { icon: Church, label: "Church Profile" },
+  { icon: Palette, label: "Branding & Theme" },
+  { icon: Globe, label: "Language & Region" },
+  { icon: Bell, label: "Notifications" },
+  { icon: CreditCard, label: "Billing & Plan" },
+  { icon: Shield, label: "Security" },
+  { icon: Database, label: "Data & Backups" },
 ];
 
 function SaveButton() {
@@ -769,7 +770,7 @@ function DataBackupsSection() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <p style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)" }}>Automatic Backups</p>
-            <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>Last backup: Jun 1, 2026 · 2:00 AM ✓</p>
+            <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)", display: "flex", alignItems: "center", gap: 4 }}>Last backup: Jun 1, 2026 · 2:00 AM <Check size={13} style={{ color: "#16A34A" }} /></p>
           </div>
           <button onClick={() => setBackups(!backups)}>
             {backups ? <ToggleRight size={24} style={{ color: BRAND }} /> : <ToggleLeft size={24} style={{ color: "#D1D5DB" }} />}
@@ -851,7 +852,7 @@ export function ChurchSettingsPage() {
                 borderLeft: isActive ? `3px solid ${BRAND}` : "3px solid transparent",
               }}
             >
-              <span style={{ fontSize: "15px" }}>{item.icon}</span>
+              <item.icon size={17} color={isActive ? BRAND : "#6B7280"} />
               <span style={{ fontSize: "13px", fontWeight: isActive ? 600 : 400, color: isActive ? BRAND : "#6B7280", fontFamily: "var(--font-label)" }}>
                 {item.label}
               </span>
@@ -873,7 +874,7 @@ export function ChurchSettingsPage() {
               fontFamily: "var(--font-label)",
             }}
           >
-            {item.icon} {item.label}
+            <item.icon size={14} /> {item.label}
           </button>
         ))}
       </div>

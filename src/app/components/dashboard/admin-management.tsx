@@ -4,7 +4,9 @@ import {
   Search, MoreHorizontal, Mail, Phone, Clock, LogOut,
   ToggleLeft, ToggleRight, Edit3, Trash2, Copy, Eye,
   AlertTriangle, Send,
+  Crown, Church, Wallet, Megaphone, Ticket, Users, Monitor, Settings, Star, KeyRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 const BRAND = "#C8860A";
 const DARK = "#1A1A2E";
@@ -27,17 +29,17 @@ interface Admin {
   ministry?: string;
 }
 
-const ROLE_CONFIG: Record<string, { icon: string; color: string; bg: string }> = {
-  "Super Admin":        { icon: "👑", color: "#1A0533", bg: "rgba(26,5,51,0.1)" },
-  "Senior Pastor":      { icon: "✝️", color: "#7C3AED", bg: "rgba(124,58,237,0.1)" },
-  "Finance Manager":    { icon: "💰", color: "#16A34A", bg: "rgba(22,163,74,0.1)" },
-  "Media & Comms":      { icon: "📢", color: "#2563EB", bg: "rgba(37,99,235,0.1)" },
-  "Events Coordinator": { icon: "🎟", color: "#D97706", bg: "rgba(217,119,6,0.1)" },
-  "Member Care":        { icon: "👥", color: "#0D9488", bg: "rgba(13,148,136,0.1)" },
-  "IT / Technical":     { icon: "🖥", color: "#6B7280", bg: "rgba(107,114,128,0.1)" },
+const ROLE_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
+  "Super Admin":        { icon: Crown, color: "#1A0533", bg: "rgba(26,5,51,0.1)" },
+  "Senior Pastor":      { icon: Church, color: "#7C3AED", bg: "rgba(124,58,237,0.1)" },
+  "Finance Manager":    { icon: Wallet, color: "#16A34A", bg: "rgba(22,163,74,0.1)" },
+  "Media & Comms":      { icon: Megaphone, color: "#2563EB", bg: "rgba(37,99,235,0.1)" },
+  "Events Coordinator": { icon: Ticket, color: "#D97706", bg: "rgba(217,119,6,0.1)" },
+  "Member Care":        { icon: Users, color: "#0D9488", bg: "rgba(13,148,136,0.1)" },
+  "IT / Technical":     { icon: Monitor, color: "#6B7280", bg: "rgba(107,114,128,0.1)" },
 };
 
-const getRoleConfig = (role: string) => ROLE_CONFIG[role] ?? { icon: "⚙️", color: BRAND, bg: `rgba(200,134,10,0.1)` };
+const getRoleConfig = (role: string) => ROLE_CONFIG[role] ?? { icon: Settings, color: BRAND, bg: `rgba(200,134,10,0.1)` };
 
 const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; bg: string; dot: string }> = {
   Active:    { label: "Active",    color: "#16A34A", bg: "rgba(22,163,74,0.1)",    dot: "#16A34A" },
@@ -97,10 +99,10 @@ const PERMISSION_MATRIX = [
 function RoleBadge({ role }: { role: string }) {
   const cfg = getRoleConfig(role);
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-      style={{ background: cfg.bg, color: cfg.color, fontFamily: "var(--font-label)", whiteSpace: "nowrap" }}>
-      {cfg.icon} {role}
-    </span>
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+        style={{ background: cfg.bg, color: cfg.color, fontFamily: "var(--font-label)", whiteSpace: "nowrap" }}>
+        <cfg.icon size={12} style={{ flexShrink: 0 }} /> {role}
+      </span>
   );
 }
 
@@ -180,12 +182,12 @@ function PermissionMatrix({ role }: { role: string }) {
 
 // ─── Invite Slide-over ─────────────────────────────────────────────────────────
 const ROLES_FOR_INVITE = [
-  { role: "Senior Pastor",       icon: "✝️", desc: "Full access except billing" },
-  { role: "Finance Manager",     icon: "💰", desc: "Finance only + reports" },
-  { role: "Media & Comms",       icon: "📢", desc: "Announcements + media upload" },
-  { role: "Events Coordinator",  icon: "🎟", desc: "Events + attend + QR check-in" },
-  { role: "Member Care",         icon: "👥", desc: "Members + msgs + milestones" },
-  { role: "Custom Role",         icon: "⚙️", desc: "Build your own" },
+  { role: "Senior Pastor",       icon: Church, desc: "Full access except billing" },
+  { role: "Finance Manager",     icon: Wallet, desc: "Finance only + reports" },
+  { role: "Media & Comms",       icon: Megaphone, desc: "Announcements + media upload" },
+  { role: "Events Coordinator",  icon: Ticket, desc: "Events + attend + QR check-in" },
+  { role: "Member Care",         icon: Users, desc: "Members + msgs + milestones" },
+  { role: "Custom Role",         icon: Settings, desc: "Build your own" },
 ];
 
 function InviteSlideOver({ onClose, onInvite }: { onClose: () => void; onInvite: (admin: Admin) => void }) {
@@ -267,7 +269,7 @@ function InviteSlideOver({ onClose, onInvite }: { onClose: () => void; onInvite:
             <div>
               <h3 style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)", marginBottom: "20px" }}>Assign Role</h3>
               <div className="grid grid-cols-2 gap-3">
-                {ROLES_FOR_INVITE.map(({ role, icon, desc }) => {
+                {ROLES_FOR_INVITE.map(({ role, icon: RoleIcon, desc }) => {
                   const isSelected = selectedRole === role;
                   return (
                     <button
@@ -284,7 +286,7 @@ function InviteSlideOver({ onClose, onInvite }: { onClose: () => void; onInvite:
                           <Check size={10} color="#fff" />
                         </div>
                       )}
-                      <p style={{ fontSize: "18px", marginBottom: "6px" }}>{icon}</p>
+                      <p style={{ fontSize: "18px", marginBottom: "6px", color: BRAND }}><RoleIcon size={18} /></p>
                       <p style={{ fontSize: "12px", fontWeight: 700, color: DARK, fontFamily: "var(--font-label)" }}>{role}</p>
                       <p style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "var(--font-label)", marginTop: "2px" }}>{desc}</p>
                     </button>
@@ -502,13 +504,13 @@ function AdminDetailSlideOver({ admin, onClose, onUpdate }: { admin: Admin; onCl
 
 // ─── Manage Roles Page ──────────────────────────────────────────────────────────
 const DEFAULT_ROLES = [
-  { name: "Super Admin",        icon: "👑", color: "#1A0533", count: 1, isDefault: true },
-  { name: "Senior Pastor",      icon: "✝️", color: "#7C3AED", count: 1, isDefault: true },
-  { name: "Finance Manager",    icon: "💰", color: "#16A34A", count: 1, isDefault: true },
-  { name: "Media & Comms",      icon: "📢", color: "#2563EB", count: 1, isDefault: true },
-  { name: "Events Coordinator", icon: "🎟", color: "#D97706", count: 1, isDefault: false },
-  { name: "Member Care",        icon: "👥", color: "#0D9488", count: 1, isDefault: false },
-  { name: "IT / Technical",     icon: "🖥", color: "#6B7280", count: 0, isDefault: false },
+  { name: "Super Admin",        icon: Crown, color: "#1A0533", count: 1, isDefault: true },
+  { name: "Senior Pastor",      icon: Church, color: "#7C3AED", count: 1, isDefault: true },
+  { name: "Finance Manager",    icon: Wallet, color: "#16A34A", count: 1, isDefault: true },
+  { name: "Media & Comms",      icon: Megaphone, color: "#2563EB", count: 1, isDefault: true },
+  { name: "Events Coordinator", icon: Ticket, color: "#D97706", count: 1, isDefault: false },
+  { name: "Member Care",        icon: Users, color: "#0D9488", count: 1, isDefault: false },
+  { name: "IT / Technical",     icon: Monitor, color: "#6B7280", count: 0, isDefault: false },
 ];
 
 function ManageRolesPanel({ onClose }: { onClose: () => void }) {
@@ -534,7 +536,7 @@ function ManageRolesPanel({ onClose }: { onClose: () => void }) {
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-0.5 text-left transition-all"
                   style={{ background: selected.name === r.name ? `rgba(200,134,10,0.08)` : "transparent" }}
                 >
-                  <span style={{ fontSize: "14px" }}>{r.icon}</span>
+                  <r.icon size={14} color={r.color} />
                   <div className="flex-1 min-w-0">
                     <p style={{ fontSize: "12px", fontWeight: 600, color: DARK, fontFamily: "var(--font-label)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>
                     <p style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>{r.count} admin{r.count !== 1 ? "s" : ""}</p>
@@ -551,7 +553,7 @@ function ManageRolesPanel({ onClose }: { onClose: () => void }) {
                 style={{ background: BRAND, color: "#fff", fontFamily: "var(--font-label)" }}
                 onClick={() => {
                   const name = `Custom Role ${roles.filter(r => r.name.startsWith("Custom")).length + 1}`;
-                  const nr = { name, icon: "⚙️", color: BRAND, count: 0, isDefault: false };
+                  const nr = { name, icon: Settings, color: BRAND, count: 0, isDefault: false };
                   setRoles(r => [...r, nr]);
                   setSelected(nr);
                 }}
@@ -585,8 +587,8 @@ function ManageRolesPanel({ onClose }: { onClose: () => void }) {
                 <div>
                   <label style={{ fontSize: "12px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Icon</label>
                   <div className="flex gap-2">
-                    {["👑", "✝️", "💰", "📢", "🎟", "👥", "🖥", "⚙️", "🌟", "🔑"].map(e => (
-                      <button key={e} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors" style={{ fontSize: "16px" }}>{e}</button>
+                    {[Crown, Church, Wallet, Megaphone, Ticket, Users, Monitor, Settings, Star, KeyRound].map(Icon => (
+                      <button key={Icon.name} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors" style={{ color: "#374151" }}><Icon size={18} /></button>
                     ))}
                   </div>
                 </div>

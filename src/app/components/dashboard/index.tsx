@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Construction } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { TopNav } from "./top-nav";
 import { StatCards } from "./stat-cards";
@@ -163,7 +164,7 @@ export function Dashboard() {
                 className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
                 style={{ background: "rgba(200,134,10,0.08)" }}
               >
-                <span style={{ fontSize: "24px" }}>🚧</span>
+                <Construction size={28} style={{ color: "#C8860A" }} />
               </div>
               <div style={{ fontSize: "16px", fontWeight: 600, color: "#1A1A1A", fontFamily: "var(--font-label)" }}>
                 {pageTitle[currentPage] ?? currentPage}

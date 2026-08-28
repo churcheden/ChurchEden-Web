@@ -7,7 +7,7 @@ import {
   Download, Send, Check, X, Clock, Flame, ChevronRight,
   MessageSquare, Phone, FileText, Filter, Search,
   ArrowUpRight, ArrowDownRight, AlertTriangle, Star,
-  Users, CalendarDays,
+  Users, CalendarDays, BarChart3, ClipboardList,
 } from "lucide-react";
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
@@ -745,10 +745,10 @@ export function AttendanceHistoryPage() {
           {/* View toggle */}
           <div style={{ padding: "14px 20px", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #EBEBEB", background: "#fff", flexShrink: 0 }}>
             <div style={{ display: "flex", background: "#F3F4F6", borderRadius: 10, padding: 3 }}>
-              {([{ key: "overview" as ViewKey, label: "📊 Overview" }, { key: "records" as ViewKey, label: "📋 Records" }]).map(v => (
+              {([{ key: "overview" as ViewKey, label: "Overview", icon: BarChart3 }, { key: "records" as ViewKey, label: "Records", icon: ClipboardList }]).map(v => (
                 <button key={v.key} onClick={() => setView(v.key)}
-                  style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: view === v.key ? "#fff" : "transparent", fontFamily: "var(--font-label)", fontSize: 13, fontWeight: view === v.key ? 700 : 400, color: view === v.key ? DARK : "#9CA3AF", cursor: "pointer", boxShadow: view === v.key ? "0 1px 6px rgba(0,0,0,0.08)" : "none" }}>
-                  {v.label}
+                  style={{ padding: "7px 18px", borderRadius: 8, border: "none", background: view === v.key ? "#fff" : "transparent", fontFamily: "var(--font-label)", fontSize: 13, fontWeight: view === v.key ? 700 : 400, color: view === v.key ? DARK : "#9CA3AF", cursor: "pointer", boxShadow: view === v.key ? "0 1px 6px rgba(0,0,0,0.08)" : "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <v.icon size={14} /> {v.label}
                 </button>
               ))}
             </div>

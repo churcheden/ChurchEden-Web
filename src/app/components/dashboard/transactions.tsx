@@ -4,6 +4,7 @@ import {
   Eye, FileText, Flag, X, Check, AlertTriangle, RefreshCcw,
   Copy, Plus, Maximize2, ChevronLeft, ChevronRight,
   ToggleLeft, ToggleRight, SlidersHorizontal,
+  Smartphone, CreditCard, Banknote, Receipt, Landmark,
 } from "lucide-react";
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
@@ -14,11 +15,11 @@ const BG = "#F5F4EF";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TxType = "Tithe" | "Offering" | "Seed" | "Fundraising" | "Ticket Purchase" | "Event Fee";
-type TxChannel = "MoMo" | "Card" | "Cash" | "Cheque" | "Bank Transfer";
-type TxStatus = "Completed" | "Pending" | "Failed" | "Refunded";
+export type TxType = "Tithe" | "Offering" | "Seed" | "Fundraising" | "Ticket Purchase" | "Event Fee";
+export type TxChannel = "MoMo" | "Card" | "Cash" | "Cheque" | "Bank Transfer";
+export type TxStatus = "Completed" | "Pending" | "Failed" | "Refunded";
 
-interface Transaction {
+export interface Transaction {
   id: string;
   memberId: string;
   member: string;
@@ -40,7 +41,7 @@ interface Transaction {
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
-const TRANSACTIONS: Transaction[] = [
+export const TRANSACTIONS: Transaction[] = [
   { id: "TXN-0091", memberId: "MBR-0041", member: "Dr. Kwame Asante", ministry: "All Members", type: "Tithe", channel: "MoMo", amount: 1200, currency: "GHS", date: "Jun 4, 2026", time: "09:14 AM", status: "Completed", receiptNo: "RCP-20260604-001", isNew: true },
   { id: "TXN-0090", memberId: "MBR-0018", member: "Sis. Grace Mensah", ministry: "Choir", type: "Offering", channel: "Card", amount: 500, currency: "GHS", date: "Jun 4, 2026", time: "08:52 AM", status: "Completed", receiptNo: "RCP-20260604-002" },
   { id: "TXN-0089", memberId: "MBR-0072", member: "Bro. Yaw Amponsah", ministry: "Youth", type: "Seed", channel: "MoMo", amount: 200, currency: "GHS", date: "Jun 3, 2026", time: "07:30 PM", status: "Pending", receiptNo: "RCP-20260603-009" },
@@ -70,7 +71,7 @@ const AVATAR_COLORS: Record<string, string> = {
   "Bro. Richard Kumi": "#B45309",
 };
 
-function initials(name: string) {
+export function initials(name: string) {
   return name.split(" ").filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join("");
 }
 
@@ -88,16 +89,20 @@ function typeStyle(t: TxType) {
   return m[t];
 }
 
-function statusStyle(s: TxStatus) {
+export function statusStyle(s: TxStatus) {
   if (s === "Completed") return { color: "#0A4A3A", bg: "rgba(10,74,58,0.09)" };
   if (s === "Pending") return { color: "#92610A", bg: "rgba(200,134,10,0.10)" };
   if (s === "Failed") return { color: "#B91C1C", bg: "rgba(185,28,28,0.09)" };
   return { color: "#6B7280", bg: "#F3F4F6" };
 }
 
-function channelIcon(ch: TxChannel) {
-  const icons: Record<TxChannel, string> = {
-    MoMo: "📱", Card: "💳", Cash: "💵", Cheque: "🧾", "Bank Transfer": "🏦",
+export function channelIcon(ch: TxChannel) {
+  const icons: Record<TxChannel, React.ReactNode> = {
+    MoMo: <Smartphone size={14} />,
+    Card: <CreditCard size={14} />,
+    Cash: <Banknote size={14} />,
+    Cheque: <Receipt size={14} />,
+    "Bank Transfer": <Landmark size={14} />,
   };
   return icons[ch];
 }
@@ -295,7 +300,7 @@ function DetailPanel({ tx, onClose }: { tx: Transaction; onClose: () => void }) 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[
             { label: "Transaction ID", value: tx.id, copy: true },
-            { label: "Channel", value: `${channelIcon(tx.channel)} ${tx.channel}` },
+            { label: "Channel", value: <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>{channelIcon(tx.channel)} {tx.channel}</span> },
             { label: "Ministry", value: tx.ministry },
             { label: "Date & Time", value: `${tx.date} · ${tx.time}` },
             { label: "Status", value: tx.status },
