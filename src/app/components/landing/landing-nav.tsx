@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "../ui/utils";
 import churchedenFavicon from "@/assets/churcheden_favicon.png";
 
 const NAV_LINKS = [
-  { label: "Home", href: "/", hasDropdown: false },
+  { label: "Product", href: "#", hasDropdown: true },
+  { label: "Solutions", href: "#", hasDropdown: true },
   { label: "Pricing", href: "/pricing", hasDropdown: false },
   { label: "Resources", href: "#", hasDropdown: true },
-  { label: "About Us", href: "#", hasDropdown: false },
+  { label: "About Us", href: "/about", hasDropdown: false },
 ];
 
 /**
@@ -18,6 +19,7 @@ const NAV_LINKS = [
  */
 export function LandingNav() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -40,25 +42,35 @@ export function LandingNav() {
 
         {/* Center nav links — desktop */}
         <nav className="hidden items-center gap-7 lg:flex">
-          {NAV_LINKS.map((link) => (
-            <button
-              key={link.label}
-              onClick={() => {
-                if (link.href === "/") {
-                  navigate("/");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                } else if (link.href !== "#") {
-                  navigate(link.href);
-                }
-              }}
-              className="flex items-center gap-1 text-sm font-medium text-slate-600 transition-colors hover:text-[#0F172A]"
-            >
-              {link.label}
-              {link.hasDropdown && (
-                <ChevronDown size={14} className="text-slate-400" />
-              )}
-            </button>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const isActive = location.pathname === link.href;
+            return (
+              <button
+                key={link.label}
+                onClick={() => {
+                  if (link.href === "/") {
+                    navigate("/");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  } else if (link.href !== "#") {
+                    navigate(link.href);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+                className={cn(
+                  "relative flex items-center gap-1 text-sm font-medium transition-colors hover:text-[#C98A16]",
+                  isActive ? "text-[#C98A16] font-semibold" : "text-slate-600"
+                )}
+              >
+                {link.label}
+                {link.hasDropdown && (
+                  <ChevronDown size={14} className={isActive ? "text-[#C98A16]" : "text-slate-400"} />
+                )}
+                {isActive && (
+                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#C98A16] rounded-full" />
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Right CTAs — desktop */}
@@ -103,27 +115,32 @@ export function LandingNav() {
             className="overflow-hidden border-t border-gray-100 bg-white lg:hidden"
           >
             <div className="flex flex-col gap-1 px-6 py-4">
-              {NAV_LINKS.map((link) => (
-                <button
-                  key={link.label}
-                  onClick={() => {
-                    if (link.href === "/") {
-                      navigate("/");
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                      setMobileOpen(false);
-                    } else if (link.href !== "#") {
-                      navigate(link.href);
-                      setMobileOpen(false);
-                    }
-                  }}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50",
-                  )}
-                >
-                  {link.label}
-                  {link.hasDropdown && <ChevronDown size={14} className="text-slate-400" />}
-                </button>
-              ))}
+              {NAV_LINKS.map((link) => {
+                const isActive = location.pathname === link.href;
+                return (
+                  <button
+                    key={link.label}
+                    onClick={() => {
+                      if (link.href === "/") {
+                        navigate("/");
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                        setMobileOpen(false);
+                      } else if (link.href !== "#") {
+                        navigate(link.href);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                        setMobileOpen(false);
+                      }
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium hover:bg-slate-50",
+                      isActive ? "text-[#C98A16] font-semibold bg-amber-50/50" : "text-slate-700"
+                    )}
+                  >
+                    {link.label}
+                    {link.hasDropdown && <ChevronDown size={14} className="text-slate-400" />}
+                  </button>
+                );
+              })}
               <div className="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3">
                 <button
                   onClick={() => {

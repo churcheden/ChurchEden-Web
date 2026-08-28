@@ -186,17 +186,12 @@ export function PricingPage() {
 
             {/* Headline — large, heavy, dark navy */}
             <h1
-              className="mb-3 leading-tight tracking-tight"
+              className="mb-3 leading-tight tracking-tight font-eden text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold text-[#0F172A]"
               style={{
-                fontFamily: "var(--font-heading)",
-                fontSize: "clamp(2rem, 4.5vw, 3rem)",
-                fontWeight: 800,
-                color: NAVY,
                 letterSpacing: "-0.02em",
               }}
             >
-              Simple pricing. Powerful{" "}
-              <span style={{ color: AMBER2 }}>ministry.</span>
+              Pricing
             </h1>
 
             {/* Sub-headline */}
