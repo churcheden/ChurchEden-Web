@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 import { Search, ChevronDown, Plus, MoreHorizontal } from "lucide-react";
 import { motion } from "motion/react";
-import { members as allMembers, type Member } from "./mock-data";
+import { toast, Toaster } from "sonner";
+import { members as seedMembers, type Member } from "./mock-data";
 import { MemberDetail } from "./member-detail";
+import { AddMemberModal } from "./add-member-modal";
 
 // ─── Stats strip ──────────────────────────────────────────────────────────────
 function StatStrip() {
@@ -106,26 +108,34 @@ const PER_PAGE = 8;
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export function MembersPage() {
+  const [members, setMembers] = useState<Member[]>(seedMembers);
   const [selected, setSelected] = useState<Member | null>(null);
   const [search, setSearch] = useState("");
   const [ministryFilter, setMinistryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [isAddOpen, setIsAddOpen] = useState(false);
 
   const filtered = useMemo(() => {
-    return allMembers.filter((m) => {
+    return members.filter((m) => {
       const q = search.toLowerCase();
       const matchSearch = !q || m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.phone.includes(q);
       const matchMinistry = !ministryFilter || m.ministries.includes(ministryFilter);
       const matchStatus = !statusFilter || m.status === statusFilter;
       return matchSearch && matchMinistry && matchStatus;
     });
-  }, [search, ministryFilter, statusFilter]);
+  }, [members, search, ministryFilter, statusFilter]);
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   const resetPage = () => setPage(1);
+
+  const handleAddMember = (member: Member) => {
+    setMembers((prev) => [member, ...prev]);
+    setPage(1);
+    toast.success("Member added successfully.");
+  };
 
   if (selected) {
     return <MemberDetail member={selected} onBack={() => setSelected(null)} />;
@@ -162,6 +172,7 @@ export function MembersPage() {
               <Dropdown value={statusFilter} options={STATUSES} onChange={(v) => { setStatusFilter(v); resetPage(); }} placeholder="All Status" />
               {/* CTA */}
               <button
+                onClick={() => setIsAddOpen(true)}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all hover:opacity-90 active:scale-95"
                 style={{ background: "#1A1A1A" }}
               >
@@ -284,6 +295,24 @@ export function MembersPage() {
           )}
         </div>
       </div>
+
+      <AddMemberModal
+        open={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
+        onAdd={handleAddMember}
+      />
+      <Toaster
+        position="bottom-right"
+        richColors
+        toastOptions={{
+          style: {
+            fontFamily: "var(--font-label)",
+            borderRadius: "12px",
+            border: "1px solid #EDEAE6",
+            boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
+          },
+        }}
+      />
     </div>
   );
 }
