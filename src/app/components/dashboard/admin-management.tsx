@@ -1,19 +1,61 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
-  UserPlus, Shield, ChevronRight, X, Check, ChevronLeft,
-  Search, MoreHorizontal, Mail, Phone, Clock, LogOut,
-  ToggleLeft, ToggleRight, Edit3, Trash2, Copy, Eye,
-  AlertTriangle, Send,
-  Crown, Church, Wallet, Megaphone, Ticket, Users, Monitor, Settings, Star, KeyRound,
+  UserPlus,
+  Shield,
+  ChevronRight,
+  X,
+  Check,
+  ChevronLeft,
+  Search,
+  MoreHorizontal,
+  Mail,
+  Phone,
+  Clock,
+  ToggleLeft,
+  ToggleRight,
+  Edit3,
+  Trash2,
+  Copy,
+  Eye,
+  AlertTriangle,
+  Send,
+  Crown,
+  Church,
+  Wallet,
+  Megaphone,
+  Ticket,
+  Users,
+  Monitor,
+  Settings,
+  Star,
+  KeyRound,
+  Download,
+  Filter,
+  ShieldCheck,
+  Smartphone,
+  Laptop,
+  CheckCircle2,
+  SlidersHorizontal,
+  Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-const BRAND = "#C8860A";
-const DARK = "#1A1A2E";
+const BRAND_GOLD = "#C8860A";
+const GOLD_LIGHT = "#E3B34D";
+const GOLD_DARK = "#78350F";
+const DARK_SLATE = "#1A1612";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 type AdminStatus = "Active" | "Invited" | "Suspended" | "Inactive";
-type RoleName = "Super Admin" | "Senior Pastor" | "Finance Manager" | "Media & Comms" | "Events Coordinator" | "Member Care" | "IT / Technical" | string;
+type RoleName =
+  | "Super Admin"
+  | "Senior Pastor"
+  | "Finance Manager"
+  | "Media & Comms"
+  | "Events Coordinator"
+  | "Member Care"
+  | "IT / Technical"
+  | string;
 
 interface Admin {
   id: number;
@@ -27,268 +69,505 @@ interface Admin {
   initials: string;
   color: string;
   ministry?: string;
+  isCurrentUser?: boolean;
+  twoFactorEnabled?: boolean;
 }
 
-const ROLE_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
-  "Super Admin":        { icon: Crown, color: "#1A0533", bg: "rgba(26,5,51,0.1)" },
-  "Senior Pastor":      { icon: Church, color: "#7C3AED", bg: "rgba(124,58,237,0.1)" },
-  "Finance Manager":    { icon: Wallet, color: "#16A34A", bg: "rgba(22,163,74,0.1)" },
-  "Media & Comms":      { icon: Megaphone, color: "#2563EB", bg: "rgba(37,99,235,0.1)" },
-  "Events Coordinator": { icon: Ticket, color: "#D97706", bg: "rgba(217,119,6,0.1)" },
-  "Member Care":        { icon: Users, color: "#0D9488", bg: "rgba(13,148,136,0.1)" },
-  "IT / Technical":     { icon: Monitor, color: "#6B7280", bg: "rgba(107,114,128,0.1)" },
+const ROLE_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string; border: string }> = {
+  "Super Admin": {
+    icon: Crown,
+    color: "#78350F",
+    bg: "rgba(200, 134, 10, 0.12)",
+    border: "rgba(200, 134, 10, 0.3)",
+  },
+  "Senior Pastor": {
+    icon: Church,
+    color: "#6D28D9",
+    bg: "rgba(109, 40, 217, 0.08)",
+    border: "rgba(109, 40, 217, 0.2)",
+  },
+  "Finance Manager": {
+    icon: Wallet,
+    color: "#047857",
+    bg: "rgba(4, 120, 87, 0.08)",
+    border: "rgba(4, 120, 87, 0.2)",
+  },
+  "Media & Comms": {
+    icon: Megaphone,
+    color: "#1D4ED8",
+    bg: "rgba(29, 78, 216, 0.08)",
+    border: "rgba(29, 78, 216, 0.2)",
+  },
+  "Events Coordinator": {
+    icon: Ticket,
+    color: "#C8860A",
+    bg: "rgba(200, 134, 10, 0.1)",
+    border: "rgba(200, 134, 10, 0.25)",
+  },
+  "Member Care": {
+    icon: Users,
+    color: "#0F766E",
+    bg: "rgba(15, 118, 110, 0.08)",
+    border: "rgba(15, 118, 110, 0.2)",
+  },
+  "IT / Technical": {
+    icon: Monitor,
+    color: "#4B5563",
+    bg: "rgba(75, 85, 99, 0.08)",
+    border: "rgba(75, 85, 99, 0.2)",
+  },
 };
 
-const getRoleConfig = (role: string) => ROLE_CONFIG[role] ?? { icon: Settings, color: BRAND, bg: `rgba(200,134,10,0.1)` };
+const getRoleConfig = (role: string) =>
+  ROLE_CONFIG[role] ?? {
+    icon: Settings,
+    color: BRAND_GOLD,
+    bg: "rgba(200, 134, 10, 0.08)",
+    border: "rgba(200, 134, 10, 0.2)",
+  };
 
-const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; bg: string; dot: string }> = {
-  Active:    { label: "Active",    color: "#16A34A", bg: "rgba(22,163,74,0.1)",    dot: "#16A34A" },
-  Invited:   { label: "Invited",   color: "#D97706", bg: "rgba(217,119,6,0.1)",    dot: "#D97706" },
-  Suspended: { label: "Suspended", color: "#DC2626", bg: "rgba(220,38,38,0.1)",    dot: "#DC2626" },
-  Inactive:  { label: "Inactive",  color: "#6B7280", bg: "rgba(107,114,128,0.1)",  dot: "#9CA3AF" },
+const STATUS_CONFIG: Record<
+  AdminStatus,
+  { label: string; color: string; bg: string; dot: string; border: string }
+> = {
+  Active: {
+    label: "Active",
+    color: "#065F46",
+    bg: "#ECFDF5",
+    dot: "#10B981",
+    border: "#A7F3D0",
+  },
+  Invited: {
+    label: "Invited",
+    color: "#78350F",
+    bg: "#FDFBF7",
+    dot: "#C8860A",
+    border: "#F3E7C4",
+  },
+  Suspended: {
+    label: "Suspended",
+    color: "#991B1B",
+    bg: "#FEF2F2",
+    dot: "#EF4444",
+    border: "#FECACA",
+  },
+  Inactive: {
+    label: "Inactive",
+    color: "#4B5563",
+    bg: "#F3F4F6",
+    dot: "#9CA3AF",
+    border: "#E5E7EB",
+  },
 };
 
 const INITIAL_ADMINS: Admin[] = [
-  { id: 1, name: "Pastor Emmanuel Kwame",  email: "emmanuel@redeemerschapel.org",  phone: "+233 24 000 0001", role: "Super Admin",        status: "Active",    lastActive: "Active now",      memberSince: "Jan 12, 2026", initials: "EK", color: "#1A0533" },
-  { id: 2, name: "Rev. Abena Mensah",      email: "abena@redeemerschapel.org",     phone: "+233 24 000 0002", role: "Senior Pastor",       status: "Active",    lastActive: "2 hours ago",     memberSince: "Jan 15, 2026", initials: "AM", color: "#7C3AED" },
-  { id: 3, name: "Kweku Asante",           email: "kweku@redeemerschapel.org",     phone: "+233 24 000 0003", role: "Finance Manager",     status: "Active",    lastActive: "Yesterday",       memberSince: "Feb 3, 2026",  initials: "KA", color: "#16A34A" },
-  { id: 4, name: "Ama Osei",              email: "ama@redeemerschapel.org",        phone: "+233 24 000 0004", role: "Media & Comms",       status: "Active",    lastActive: "3 days ago",      memberSince: "Feb 10, 2026", initials: "AO", color: "#2563EB" },
-  { id: 5, name: "Kofi Boateng",          email: "kofi@redeemerschapel.org",       phone: "+233 24 000 0005", role: "Events Coordinator",  status: "Invited",   lastActive: "—",               memberSince: "—",            initials: "KB", color: "#D97706", ministry: "Youth Ministry" },
-  { id: 6, name: "Grace Agyei",           email: "grace@redeemerschapel.org",      phone: "+233 24 000 0006", role: "Member Care",         status: "Suspended", lastActive: "Jun 1, 2026",     memberSince: "Mar 1, 2026",  initials: "GA", color: "#0D9488" },
+  {
+    id: 1,
+    name: "Pastor Emmanuel Kwame",
+    email: "emmanuel@redeemerschapel.org",
+    phone: "+233 24 000 0001",
+    role: "Super Admin",
+    status: "Active",
+    lastActive: "Active now",
+    memberSince: "Jan 12, 2026",
+    initials: "EK",
+    color: "#78350F",
+    isCurrentUser: true,
+    twoFactorEnabled: true,
+  },
+  {
+    id: 2,
+    name: "Rev. Abena Mensah",
+    email: "abena@redeemerschapel.org",
+    phone: "+233 24 000 0002",
+    role: "Senior Pastor",
+    status: "Active",
+    lastActive: "2 hours ago",
+    memberSince: "Jan 15, 2026",
+    initials: "AM",
+    color: "#6D28D9",
+    twoFactorEnabled: true,
+  },
+  {
+    id: 3,
+    name: "Kweku Asante",
+    email: "kweku@redeemerschapel.org",
+    phone: "+233 24 000 0003",
+    role: "Finance Manager",
+    status: "Active",
+    lastActive: "Yesterday",
+    memberSince: "Feb 3, 2026",
+    initials: "KA",
+    color: "#047857",
+    twoFactorEnabled: true,
+  },
+  {
+    id: 4,
+    name: "Ama Osei",
+    email: "ama@redeemerschapel.org",
+    phone: "+233 24 000 0004",
+    role: "Media & Comms",
+    status: "Active",
+    lastActive: "3 days ago",
+    memberSince: "Feb 10, 2026",
+    initials: "AO",
+    color: "#1D4ED8",
+    twoFactorEnabled: false,
+  },
+  {
+    id: 5,
+    name: "Kofi Boateng",
+    email: "kofi@redeemerschapel.org",
+    phone: "+233 24 000 0005",
+    role: "Events Coordinator",
+    status: "Invited",
+    lastActive: "Pending invite",
+    memberSince: "May 28, 2026",
+    initials: "KB",
+    color: "#C8860A",
+    ministry: "Youth Ministry",
+    twoFactorEnabled: false,
+  },
+  {
+    id: 6,
+    name: "Grace Agyei",
+    email: "grace@redeemerschapel.org",
+    phone: "+233 24 000 0006",
+    role: "Member Care",
+    status: "Suspended",
+    lastActive: "Jun 1, 2026",
+    memberSince: "Mar 1, 2026",
+    initials: "GA",
+    color: "#0F766E",
+    twoFactorEnabled: true,
+  },
 ];
 
 const PERMISSION_MATRIX = [
   {
-    group: "MEMBERS",
-    perms: ["View members", "Add / edit members", "Delete members", "Export member data"],
-    defaults: { "Senior Pastor": [true, true, true, true], "Finance Manager": [true, false, false, false], "Media & Comms": [true, false, false, false], "Events Coordinator": [true, true, false, false], "Member Care": [true, true, false, false] },
+    group: "MEMBERS & CONGREGATION",
+    perms: [
+      { name: "View members directory", desc: "Browse profiles, tags and notes" },
+      { name: "Add / edit members", desc: "Create and update member records" },
+      { name: "Delete member records", desc: "Permanently remove contacts" },
+      { name: "Export member data (CSV)", desc: "Download full member list" },
+    ],
   },
   {
-    group: "GIVING & FINANCE",
-    perms: ["View transactions", "Record giving manually", "View financial reports", "Approve expenses", "Access billing settings"],
-    defaults: { "Finance Manager": [true, true, true, true, false] },
+    group: "GIVING & FINANCIALS",
+    perms: [
+      { name: "View giving & transactions", desc: "View tithes and offerings" },
+      { name: "Record offline giving", desc: "Log cash and bank deposits" },
+      { name: "View financial reports", desc: "Export statements and analytics" },
+      { name: "Approve budget expenses", desc: "Authorize ministry expenditures" },
+      { name: "Access bank & payout settings", desc: "Modify payout bank accounts" },
+    ],
   },
   {
-    group: "EVENTS",
-    perms: ["View events", "Create / edit events", "Delete events", "Manage ticketing"],
-    defaults: { "Events Coordinator": [true, true, false, true] },
+    group: "SERVICES & EVENTS",
+    perms: [
+      { name: "View events calendar", desc: "See upcoming church sessions" },
+      { name: "Create & edit events", desc: "Schedule services and programs" },
+      { name: "Manage ticket registrations", desc: "Track VIP/General attendees" },
+      { name: "Run QR Code Check-in", desc: "Live check-in gatekeeper mode" },
+    ],
   },
   {
-    group: "ANNOUNCEMENTS",
-    perms: ["Draft announcements", "Publish announcements", "Send SMS / WhatsApp", "Schedule broadcasts"],
-    defaults: { "Media & Comms": [true, false, false, true] },
+    group: "ANNOUNCEMENTS & COMMUNICATIONS",
+    perms: [
+      { name: "Draft announcements", desc: "Prepare bulletin notices" },
+      { name: "Publish live announcements", desc: "Broadcast to mobile app" },
+      { name: "Send SMS & WhatsApp blasts", desc: "Trigger direct phone alerts" },
+    ],
   },
   {
-    group: "SERMONS & MEDIA",
-    perms: ["Upload sermons", "Delete media", "Manage live stream"],
-    defaults: { "Media & Comms": [true, false, false] },
-  },
-  {
-    group: "ATTENDANCE",
-    perms: ["View attendance records", "Run QR check-in", "Export attendance data"],
-    defaults: { "Events Coordinator": [true, true, false] },
-  },
-  {
-    group: "SETTINGS",
-    perms: ["Church profile settings", "Integrations", "Manage admins", "Billing & plan"],
-    defaults: {},
+    group: "ADMIN & SECURITY",
+    perms: [
+      { name: "Manage church settings", desc: "Church branding and domain" },
+      { name: "Invite & manage admins", desc: "Role assignments & privileges" },
+      { name: "View security audit logs", desc: "Track login and admin actions" },
+    ],
   },
 ];
 
-// ─── Helper Components ─────────────────────────────────────────────────────────
+// ─── Subcomponents ─────────────────────────────────────────────────────────────
+
 function RoleBadge({ role }: { role: string }) {
   const cfg = getRoleConfig(role);
+  const Icon = cfg.icon;
   return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-        style={{ background: cfg.bg, color: cfg.color, fontFamily: "var(--font-label)", whiteSpace: "nowrap" }}>
-        <cfg.icon size={12} style={{ flexShrink: 0 }} /> {role}
-      </span>
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold tracking-tight border shadow-2xs"
+      style={{
+        backgroundColor: cfg.bg,
+        color: cfg.color,
+        borderColor: cfg.border,
+      }}
+    >
+      <Icon size={12} className="flex-shrink-0" />
+      <span>{role}</span>
+    </span>
   );
 }
 
 function StatusBadge({ status }: { status: AdminStatus }) {
   const cfg = STATUS_CONFIG[status];
   return (
-    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-      style={{ background: cfg.bg, color: cfg.color, fontFamily: "var(--font-label)" }}>
-      <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: cfg.dot }} />
-      {cfg.label}
+    <span
+      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border"
+      style={{
+        backgroundColor: cfg.bg,
+        color: cfg.color,
+        borderColor: cfg.border,
+      }}
+    >
+      <span
+        className="w-1.5 h-1.5 rounded-full inline-block animate-pulse"
+        style={{ backgroundColor: cfg.dot }}
+      />
+      <span>{cfg.label}</span>
     </span>
   );
 }
 
-function Avatar({ initials, color, size = 36 }: { initials: string; color: string; size?: number }) {
+function Avatar({
+  initials,
+  color,
+  size = 38,
+}: {
+  initials: string;
+  color: string;
+  size?: number;
+}) {
   return (
-    <div className="rounded-full flex items-center justify-center flex-shrink-0"
-      style={{ width: size, height: size, background: color, fontSize: size * 0.33, fontWeight: 700, color: "#fff", fontFamily: "var(--font-label)" }}>
+    <div
+      className="rounded-full flex items-center justify-center font-bold text-white shadow-xs select-none flex-shrink-0"
+      style={{
+        width: size,
+        height: size,
+        backgroundColor: color,
+        fontSize: size * 0.36,
+      }}
+    >
       {initials}
     </div>
   );
 }
 
-function StyledInput({ placeholder, defaultValue, type = "text", value, onChange }: {
-  placeholder?: string; defaultValue?: string; type?: string; value?: string; onChange?: (v: string) => void;
-}) {
-  return (
-    <input
-      type={type}
-      placeholder={placeholder}
-      defaultValue={defaultValue}
-      value={value}
-      onChange={e => onChange?.(e.target.value)}
-      className="w-full px-3.5 py-2.5 rounded-xl outline-none transition-all"
-      style={{ border: "1px solid #E5E3DC", background: "#FAFAF8", fontSize: "13px", color: DARK, fontFamily: "var(--font-label)" }}
-      onFocus={e => (e.target.style.borderColor = BRAND)}
-      onBlur={e => (e.target.style.borderColor = "#E5E3DC")}
-    />
-  );
-}
-
-function PermissionMatrix({ role }: { role: string }) {
-  const getDefault = (group: typeof PERMISSION_MATRIX[0], idx: number) => {
-    if (role === "Super Admin") return true;
-    const d = group.defaults[role as keyof typeof group.defaults];
-    return d ? (d[idx] ?? false) : false;
-  };
-  const [perms, setPerms] = useState(() =>
-    PERMISSION_MATRIX.map(g => ({ ...g, values: g.perms.map((_, i) => getDefault(g, i)) }))
-  );
-
-  const toggle = (gi: number, pi: number) => {
-    if (role === "Super Admin") return;
-    setPerms(p => p.map((g, i) => i === gi ? { ...g, values: g.values.map((v, j) => j === pi ? !v : v) } : g));
-  };
-
-  return (
-    <div>
-      {perms.map((group, gi) => (
-        <div key={group.group} className="mb-4">
-          <p style={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", fontFamily: "var(--font-label)", letterSpacing: "0.08em", marginBottom: "6px" }}>{group.group}</p>
-          {group.perms.map((perm, pi) => (
-            <div key={perm} className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid #F3F2ED" }}>
-              <span style={{ fontSize: "13px", color: "#374151", fontFamily: "var(--font-label)" }}>{perm}</span>
-              <button onClick={() => toggle(gi, pi)} className={role === "Super Admin" ? "opacity-50 cursor-not-allowed" : ""}>
-                {group.values[pi]
-                  ? <ToggleRight size={22} style={{ color: BRAND }} />
-                  : <ToggleLeft size={22} style={{ color: "#D1D5DB" }} />}
-              </button>
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Invite Slide-over ─────────────────────────────────────────────────────────
+// ─── Slide-Over: Invite Admin ──────────────────────────────────────────────────
 const ROLES_FOR_INVITE = [
-  { role: "Senior Pastor",       icon: Church, desc: "Full access except billing" },
-  { role: "Finance Manager",     icon: Wallet, desc: "Finance only + reports" },
-  { role: "Media & Comms",       icon: Megaphone, desc: "Announcements + media upload" },
-  { role: "Events Coordinator",  icon: Ticket, desc: "Events + attend + QR check-in" },
-  { role: "Member Care",         icon: Users, desc: "Members + msgs + milestones" },
-  { role: "Custom Role",         icon: Settings, desc: "Build your own" },
+  {
+    role: "Senior Pastor",
+    icon: Church,
+    desc: "Oversees church congregation, services, and reports",
+  },
+  {
+    role: "Finance Manager",
+    icon: Wallet,
+    desc: "Full accounting, tithes/offerings, and giving audit",
+  },
+  {
+    role: "Media & Comms",
+    icon: Megaphone,
+    desc: "Broadcasts, announcements, and sermon media",
+  },
+  {
+    role: "Events Coordinator",
+    icon: Ticket,
+    desc: "Services scheduling, ticketing, and QR check-in",
+  },
+  {
+    role: "Member Care",
+    icon: Users,
+    desc: "Member follow-up, directories, and pastoral care",
+  },
+  {
+    role: "Custom Role",
+    icon: Settings,
+    desc: "Fine-tune custom permissions matrix",
+  },
 ];
 
-function InviteSlideOver({ onClose, onInvite }: { onClose: () => void; onInvite: (admin: Admin) => void }) {
+function InviteSlideOver({
+  onClose,
+  onInvite,
+}: {
+  onClose: () => void;
+  onInvite: (admin: Admin) => void;
+}) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedRole, setSelectedRole] = useState("Senior Pastor");
   const [inviteChannel, setInviteChannel] = useState<"Email" | "WhatsApp" | "Both">("Email");
   const [customMsg, setCustomMsg] = useState("");
   const [restrictMinistry, setRestrictMinistry] = useState(false);
+  const [selectedMinistries, setSelectedMinistries] = useState<string[]>(["Youth Ministry"]);
 
-  const canNext = step === 1 ? name && email : step === 2 ? !!selectedRole : true;
+  const canNext = step === 1 ? name.trim().length > 1 && email.includes("@") : true;
 
   const handleSend = () => {
     const cfg = getRoleConfig(selectedRole);
+    const initials = name
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
     onInvite({
       id: Date.now(),
       name,
       email,
       phone,
-      role: selectedRole || "Member Care",
+      role: selectedRole,
       status: "Invited",
-      lastActive: "—",
-      memberSince: "—",
-      initials: name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(),
+      lastActive: "Pending invite",
+      memberSince: "Today",
+      initials: initials || "AD",
       color: cfg.color,
+      ministry: restrictMinistry ? selectedMinistries.join(", ") : undefined,
+      twoFactorEnabled: false,
     });
     onClose();
   };
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full z-50 flex flex-col shadow-2xl" style={{ width: "min(480px, 100vw)", background: "#fff" }}>
+      <div
+        className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-40 transition-opacity"
+        onClick={onClose}
+      />
+      <div className="fixed right-0 top-0 h-full z-50 flex flex-col shadow-2xl bg-[#FCFAF6] border-l border-[#E5E3DC] w-full max-w-lg">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid #EEEDE8" }}>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#EAE7DC] bg-white/80 backdrop-blur-md">
           <div>
-            <p style={{ fontSize: "16px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)" }}>Invite Admin</p>
-            <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>Step {step} of 5</p>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: BRAND_GOLD }} />
+              <h3 className="text-base font-bold text-slate-900">Invite New Administrator</h3>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">Step {step} of 5 — Provision access</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-50 transition-colors"><X size={18} color="#9CA3AF" /></button>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* Steps indicator */}
-        <div className="flex px-6 py-3 gap-1" style={{ borderBottom: "1px solid #EEEDE8" }}>
-          {[1, 2, 3, 4, 5].map(s => (
-            <div key={s} className="flex-1 h-1 rounded-full transition-all" style={{ background: s <= step ? BRAND : "#E5E3DC" }} />
+        {/* Step Progress Bar */}
+        <div className="flex px-6 py-2.5 gap-1.5 bg-slate-50/50 border-b border-[#EAE7DC]">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <div
+              key={s}
+              className="flex-1 h-1.5 rounded-full transition-all duration-300"
+              style={{
+                backgroundColor: s <= step ? BRAND_GOLD : "#E2E8F0",
+                boxShadow: s <= step ? `0 1px 4px ${BRAND_GOLD}40` : "none",
+              }}
+            />
           ))}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        {/* Form Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {step === 1 && (
-            <div>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)", marginBottom: "20px" }}>Basic Info</h3>
-              <div className="mb-4">
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Full Name *</label>
-                <StyledInput placeholder="e.g. Pastor Ama Boateng" value={name} onChange={setName} />
-              </div>
-              <div className="mb-4">
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Email Address *</label>
-                <StyledInput type="email" placeholder="admin@yourchurch.org" value={email} onChange={setEmail} />
-              </div>
-              <div className="mb-4">
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Phone Number <span style={{ fontWeight: 400, color: "#9CA3AF" }}>(optional)</span></label>
-                <StyledInput placeholder="+233 24 000 0000" value={phone} onChange={setPhone} />
-              </div>
+            <div className="space-y-4">
               <div>
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Profile Photo <span style={{ fontWeight: 400, color: "#9CA3AF" }}>(optional)</span></label>
-                <div className="rounded-xl p-6 text-center cursor-pointer" style={{ border: "2px dashed #E5E3DC", background: "#FAFAF8" }}>
-                  <p style={{ fontSize: "13px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>Click to upload photo</p>
-                </div>
+                <h4 className="text-sm font-bold text-slate-900">Administrator Details</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Enter credentials for the team member.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Full Name <span style={{ color: BRAND_GOLD }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Pastor Ama Mensah"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E3DC] bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C8860A]/20 focus:border-[#C8860A]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Church Email Address <span style={{ color: BRAND_GOLD }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="ama@redeemerschapel.org"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E3DC] bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C8860A]/20 focus:border-[#C8860A]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Phone Number <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+233 24 000 0000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E3DC] bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C8860A]/20 focus:border-[#C8860A]"
+                />
               </div>
             </div>
           )}
 
           {step === 2 && (
-            <div>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)", marginBottom: "20px" }}>Assign Role</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">Select Role Preset</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Choose a preset role to apply predefined permissions.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {ROLES_FOR_INVITE.map(({ role, icon: RoleIcon, desc }) => {
                   const isSelected = selectedRole === role;
+                  const cfg = getRoleConfig(role);
                   return (
                     <button
                       key={role}
+                      type="button"
                       onClick={() => setSelectedRole(role)}
-                      className="p-4 rounded-2xl text-left transition-all relative"
+                      className={`p-3.5 rounded-2xl text-left border transition-all relative flex flex-col justify-between ${
+                        isSelected
+                          ? "border-[#C8860A] ring-2 ring-[#C8860A]/20"
+                          : "bg-white border-[#E5E3DC] hover:border-slate-300"
+                      }`}
                       style={{
-                        border: `2px solid ${isSelected ? BRAND : "#E5E3DC"}`,
-                        background: isSelected ? `rgba(200,134,10,0.06)` : "#FAFAF8",
+                        backgroundColor: isSelected ? "rgba(200, 134, 10, 0.08)" : "#FFFFFF",
                       }}
                     >
                       {isSelected && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: BRAND }}>
-                          <Check size={10} color="#fff" />
+                        <div
+                          className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center text-white"
+                          style={{ backgroundColor: BRAND_GOLD }}
+                        >
+                          <Check size={11} strokeWidth={3} />
                         </div>
                       )}
-                      <p style={{ fontSize: "18px", marginBottom: "6px", color: BRAND }}><RoleIcon size={18} /></p>
-                      <p style={{ fontSize: "12px", fontWeight: 700, color: DARK, fontFamily: "var(--font-label)" }}>{role}</p>
-                      <p style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "var(--font-label)", marginTop: "2px" }}>{desc}</p>
+                      <div>
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center mb-2.5"
+                          style={{ backgroundColor: cfg.bg, color: cfg.color }}
+                        >
+                          <RoleIcon size={16} />
+                        </div>
+                        <p className="text-xs font-bold text-slate-900">{role}</p>
+                        <p className="text-[11px] text-slate-500 mt-1 leading-snug">{desc}</p>
+                      </div>
                     </button>
                   );
                 })}
@@ -297,85 +576,198 @@ function InviteSlideOver({ onClose, onInvite }: { onClose: () => void; onInvite:
           )}
 
           {step === 3 && (
-            <div>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)", marginBottom: "4px" }}>Fine-tune Permissions</h3>
-              <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)", marginBottom: "16px" }}>Customise access for {selectedRole}</p>
-              <PermissionMatrix role={selectedRole} />
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">Fine-tune Permissions</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Granular control for {selectedRole} role.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {PERMISSION_MATRIX.map((group) => (
+                  <div key={group.group} className="rounded-2xl border border-[#E5E3DC] bg-white p-3.5">
+                    <p
+                      className="text-[10px] font-bold uppercase tracking-wider mb-2.5"
+                      style={{ color: GOLD_DARK }}
+                    >
+                      {group.group}
+                    </p>
+                    <div className="space-y-2 divide-y divide-slate-100">
+                      {group.perms.map((perm) => (
+                        <div key={perm.name} className="pt-2 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-800">{perm.name}</p>
+                            <p className="text-[10px] text-slate-400">{perm.desc}</p>
+                          </div>
+                          <button
+                            type="button"
+                            className="hover:opacity-80 transition-opacity"
+                            style={{ color: BRAND_GOLD }}
+                          >
+                            <ToggleRight size={24} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {step === 4 && (
-            <div>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)", marginBottom: "20px" }}>Ministry Scope</h3>
-              <div className="flex items-center justify-between py-3 mb-4" style={{ borderBottom: "1px solid #F3F2ED" }}>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">Ministry Scoping</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Restrict data access to specific church branches or ministries.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl border border-[#E5E3DC] bg-white flex items-center justify-between">
                 <div>
-                  <p style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)" }}>Restrict to specific ministry</p>
-                  <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>Admin only sees data for their assigned ministries</p>
+                  <p className="text-xs font-bold text-slate-900">Restrict to Assigned Ministries</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Admin only views members and events within their department
+                  </p>
                 </div>
-                <button onClick={() => setRestrictMinistry(!restrictMinistry)}>
-                  {restrictMinistry ? <ToggleRight size={24} style={{ color: BRAND }} /> : <ToggleLeft size={24} style={{ color: "#D1D5DB" }} />}
+                <button
+                  type="button"
+                  onClick={() => setRestrictMinistry(!restrictMinistry)}
+                  style={{ color: restrictMinistry ? BRAND_GOLD : "#CBD5E1" }}
+                >
+                  {restrictMinistry ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
                 </button>
               </div>
+
               {restrictMinistry && (
-                <div>
-                  <label style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "8px" }}>Select Ministries</label>
-                  {["Youth Ministry", "Women's Fellowship", "Men's Fellowship", "Choir", "Ushers", "Children's Church"].map(m => (
-                    <label key={m} className="flex items-center gap-2.5 py-2.5 cursor-pointer" style={{ borderBottom: "1px solid #F3F2ED" }}>
-                      <input type="checkbox" className="w-4 h-4 accent-amber-600" />
-                      <span style={{ fontSize: "13px", color: DARK, fontFamily: "var(--font-label)" }}>{m}</span>
-                    </label>
-                  ))}
+                <div className="space-y-2 pt-2">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Select Departments & Ministries:
+                  </label>
+                  {[
+                    "Youth Ministry",
+                    "Children's Church",
+                    "Choir & Praise Team",
+                    "Ushers & Protocol",
+                    "Women's Fellowship",
+                    "Men's Fellowship",
+                    "Evangelism & Missions",
+                  ].map((m) => {
+                    const isChecked = selectedMinistries.includes(m);
+                    return (
+                      <label
+                        key={m}
+                        className="flex items-center gap-3 p-2.5 rounded-xl border border-[#E5E3DC] bg-white cursor-pointer hover:bg-slate-50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() =>
+                            setSelectedMinistries((prev) =>
+                              isChecked ? prev.filter((x) => x !== m) : [...prev, m]
+                            )
+                          }
+                          className="w-4 h-4 rounded"
+                          style={{ accentColor: BRAND_GOLD }}
+                        />
+                        <span className="text-xs font-medium text-slate-800">{m}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
 
           {step === 5 && (
-            <div>
-              <h3 style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)", marginBottom: "20px" }}>Send Invite</h3>
-              {/* Preview card */}
-              <div className="rounded-2xl p-4 mb-5" style={{ background: "#F0EFE9", border: "1px solid #E5E3DC" }}>
-                <p style={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", fontFamily: "var(--font-label)", letterSpacing: "0.08em", marginBottom: "10px" }}>PREVIEW</p>
+            <div className="space-y-5">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">Review & Send Invite</h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Confirm details before sending setup credentials.
+                </p>
+              </div>
+
+              {/* Live Preview Card */}
+              <div
+                className="p-4 rounded-2xl border shadow-xs space-y-3"
+                style={{
+                  backgroundColor: "rgba(200, 134, 10, 0.05)",
+                  borderColor: "rgba(200, 134, 10, 0.2)",
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-wider"
+                    style={{ color: GOLD_DARK }}
+                  >
+                    Invitation Preview
+                  </span>
+                  <StatusBadge status="Invited" />
+                </div>
                 <div className="flex items-center gap-3">
-                  <Avatar initials={name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "??"} color={getRoleConfig(selectedRole).color} size={44} />
+                  <Avatar
+                    initials={
+                      name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase() || "AD"
+                    }
+                    color={getRoleConfig(selectedRole).color}
+                    size={42}
+                  />
                   <div>
-                    <p style={{ fontSize: "14px", fontWeight: 700, color: DARK, fontFamily: "var(--font-label)" }}>{name || "Name"}</p>
-                    <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>{email}</p>
-                    <div className="mt-1"><RoleBadge role={selectedRole || "Role"} /></div>
+                    <p className="text-sm font-bold text-slate-900">{name || "Administrator"}</p>
+                    <p className="text-xs text-slate-500">{email || "admin@yourchurch.org"}</p>
+                    <div className="mt-1">
+                      <RoleBadge role={selectedRole} />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="mb-4">
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "8px" }}>Invite Channel</label>
+              {/* Delivery Channel */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Dispatch Channel
+                </label>
                 <div className="flex gap-2">
-                  {(["Email", "WhatsApp", "Both"] as const).map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setInviteChannel(c)}
-                      className="px-4 py-2 rounded-full text-sm font-semibold transition-all"
-                      style={{
-                        border: `1px solid ${inviteChannel === c ? BRAND : "#E5E3DC"}`,
-                        background: inviteChannel === c ? `rgba(200,134,10,0.08)` : "#FAFAF8",
-                        color: inviteChannel === c ? BRAND : "#6B7280",
-                        fontFamily: "var(--font-label)",
-                      }}
-                    >
-                      {c}
-                    </button>
-                  ))}
+                  {(["Email", "WhatsApp", "Both"] as const).map((channel) => {
+                    const isSelected = inviteChannel === channel;
+                    return (
+                      <button
+                        key={channel}
+                        type="button"
+                        onClick={() => setInviteChannel(channel)}
+                        className="flex-1 py-2 rounded-xl text-xs font-semibold border transition-all"
+                        style={{
+                          backgroundColor: isSelected ? BRAND_GOLD : "#FFFFFF",
+                          color: isSelected ? "#FFFFFF" : "#4B5563",
+                          borderColor: isSelected ? BRAND_GOLD : "#E5E3DC",
+                          boxShadow: isSelected ? `0 2px 8px ${BRAND_GOLD}40` : "none",
+                        }}
+                      >
+                        {channel}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: "13px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Custom Message <span style={{ fontWeight: 400, color: "#9CA3AF" }}>(optional)</span></label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Personal Message <span className="text-slate-400 font-normal">(Optional)</span>
+                </label>
                 <textarea
                   rows={3}
                   value={customMsg}
-                  onChange={e => setCustomMsg(e.target.value)}
-                  placeholder="Welcome to the team! We've set up your admin account..."
-                  className="w-full px-3.5 py-2.5 rounded-xl outline-none resize-none"
-                  style={{ border: "1px solid #E5E3DC", background: "#FAFAF8", fontSize: "13px", color: DARK, fontFamily: "var(--font-label)" }}
+                  onChange={(e) => setCustomMsg(e.target.value)}
+                  placeholder="Welcome to our ministry leadership team! Please use this link to complete your profile..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E3DC] bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C8860A]/20 focus:border-[#C8860A] resize-none"
                 />
               </div>
             </div>
@@ -383,29 +775,42 @@ function InviteSlideOver({ onClose, onInvite }: { onClose: () => void; onInvite:
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderTop: "1px solid #EEEDE8" }}>
+        <div className="p-4 px-6 border-t border-[#EAE7DC] bg-white flex items-center justify-between">
           <button
-            onClick={() => step > 1 ? setStep(s => s - 1) : onClose()}
-            className="flex items-center gap-1.5 text-sm"
-            style={{ color: "#9CA3AF", fontFamily: "var(--font-label)", fontWeight: 600 }}
+            type="button"
+            onClick={() => (step > 1 ? setStep((s) => s - 1) : onClose())}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900"
           >
-            <ChevronLeft size={14} /> {step > 1 ? "Back" : "Cancel"}
+            <ChevronLeft size={14} />
+            <span>{step > 1 ? "Back" : "Cancel"}</span>
           </button>
+
           {step < 5 ? (
             <button
-              onClick={() => canNext && setStep(s => s + 1)}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:opacity-90"
-              style={{ background: canNext ? BRAND : "#E5E3DC", color: canNext ? "#fff" : "#9CA3AF", fontFamily: "var(--font-label)", cursor: canNext ? "pointer" : "not-allowed" }}
+              type="button"
+              disabled={!canNext}
+              onClick={() => setStep((s) => s + 1)}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-all cursor-pointer"
+              style={{
+                backgroundColor: BRAND_GOLD,
+                boxShadow: `0 2px 10px ${BRAND_GOLD}40`,
+              }}
             >
-              Continue <ChevronRight size={14} />
+              <span>Continue</span>
+              <ChevronRight size={14} />
             </button>
           ) : (
             <button
+              type="button"
               onClick={handleSend}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:opacity-90"
-              style={{ background: BRAND, color: "#fff", fontFamily: "var(--font-label)" }}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold text-white shadow-xs transition-all cursor-pointer"
+              style={{
+                backgroundColor: BRAND_GOLD,
+                boxShadow: `0 4px 14px ${BRAND_GOLD}40`,
+              }}
             >
-              <Send size={14} /> Send Invite
+              <Send size={13} />
+              <span>Send Invitation</span>
             </button>
           )}
         </div>
@@ -414,85 +819,153 @@ function InviteSlideOver({ onClose, onInvite }: { onClose: () => void; onInvite:
   );
 }
 
-// ─── Admin Detail Slide-over ────────────────────────────────────────────────────
-function AdminDetailSlideOver({ admin, onClose, onUpdate }: { admin: Admin; onClose: () => void; onUpdate: (a: Admin) => void }) {
+// ─── Slide-Over: Admin Details ─────────────────────────────────────────────────
+function AdminDetailSlideOver({
+  admin,
+  onClose,
+  onUpdate,
+}: {
+  admin: Admin;
+  onClose: () => void;
+  onUpdate: (a: Admin) => void;
+}) {
   const isSuper = admin.role === "Super Admin";
-  const loginActivity = [
-    { device: "Chrome / macOS", location: "Accra, GH", time: "Jun 4, 2026 · 9:14 AM" },
-    { device: "Safari / iOS",   location: "Accra, GH", time: "Jun 3, 2026 · 7:01 AM" },
-    { device: "Edge / Windows", location: "London, UK", time: "Jun 1, 2026 · 6:23 PM" },
-  ];
 
-  const handleSuspend = () => {
-    const next = admin.status === "Suspended" ? "Active" : "Suspended";
-    onUpdate({ ...admin, status: next });
+  const handleToggleSuspend = () => {
+    const nextStatus: AdminStatus = admin.status === "Suspended" ? "Active" : "Suspended";
+    onUpdate({ ...admin, status: nextStatus });
   };
+
+  const loginSessions = [
+    { device: "MacBook Pro · macOS 15.2", location: "Accra, Ghana", time: "Today · 9:14 AM", icon: Laptop },
+    { device: "iPhone 16 Pro · iOS 18", location: "Accra, Ghana", time: "Yesterday · 8:45 PM", icon: Smartphone },
+    { device: "Chrome · Windows 11", location: "London, UK", time: "Jun 1, 2026 · 6:23 PM", icon: Laptop },
+  ];
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-      <div className="fixed right-0 top-0 h-full z-50 flex flex-col shadow-2xl overflow-y-auto" style={{ width: "min(400px, 100vw)", background: "#fff" }}>
-        <div className="flex items-center justify-between px-6 py-5 sticky top-0" style={{ background: "#fff", borderBottom: "1px solid #EEEDE8" }}>
-          <p style={{ fontSize: "15px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)" }}>Admin Details</p>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-50"><X size={18} color="#9CA3AF" /></button>
+      <div
+        className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-40 transition-opacity"
+        onClick={onClose}
+      />
+      <div className="fixed right-0 top-0 h-full z-50 flex flex-col shadow-2xl bg-[#FCFAF6] border-l border-[#E5E3DC] w-full max-w-md">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#EAE7DC] bg-white">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={18} style={{ color: BRAND_GOLD }} />
+            <h3 className="text-sm font-bold text-slate-900">Administrator Dossier</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        <div className="px-6 py-5">
-          {/* Profile */}
-          <div className="flex items-center gap-4 mb-5">
-            <Avatar initials={admin.initials} color={admin.color} size={56} />
-            <div>
-              <p style={{ fontSize: "16px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)" }}>{admin.name}</p>
-              <p style={{ fontSize: "13px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>{admin.email}</p>
-              <div className="mt-1.5 flex items-center gap-2">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Profile Badge */}
+          <div className="p-4 rounded-2xl bg-white border border-[#E5E3DC] shadow-xs flex items-center gap-4">
+            <Avatar initials={admin.initials} color={admin.color} size={54} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-base font-bold text-slate-900 truncate">{admin.name}</p>
+                {admin.isCurrentUser && (
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                    style={{ backgroundColor: "rgba(200, 134, 10, 0.12)", color: GOLD_DARK }}
+                  >
+                    YOU
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 truncate">{admin.email}</p>
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
                 <RoleBadge role={admin.role} />
                 <StatusBadge status={admin.status} />
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className="p-3 rounded-xl" style={{ background: "#F5F4EF" }}>
-              <p style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "var(--font-label)", marginBottom: "2px" }}>Last Active</p>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: DARK, fontFamily: "var(--font-label)" }}>{admin.lastActive}</p>
+          {/* Key Metrics */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3.5 rounded-2xl bg-white border border-[#E5E3DC]">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Last Activity
+              </p>
+              <p className="text-xs font-bold text-slate-900 mt-1">{admin.lastActive}</p>
             </div>
-            <div className="p-3 rounded-xl" style={{ background: "#F5F4EF" }}>
-              <p style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "var(--font-label)", marginBottom: "2px" }}>Member Since</p>
-              <p style={{ fontSize: "12px", fontWeight: 600, color: DARK, fontFamily: "var(--font-label)" }}>{admin.memberSince}</p>
+            <div className="p-3.5 rounded-2xl bg-white border border-[#E5E3DC]">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                2FA Security
+              </p>
+              <p className="text-xs font-bold text-emerald-600 mt-1 flex items-center gap-1">
+                <CheckCircle2 size={12} />
+                <span>{admin.twoFactorEnabled ? "Enforced" : "Optional"}</span>
+              </p>
             </div>
           </div>
 
-          {/* Permissions summary */}
-          <div className="mb-5">
-            <p style={{ fontSize: "13px", fontWeight: 700, color: DARK, fontFamily: "var(--font-label)", marginBottom: "10px" }}>Permissions</p>
-            <PermissionMatrix role={admin.role} />
+          {/* Ministry Scope */}
+          <div className="p-4 rounded-2xl bg-white border border-[#E5E3DC]">
+            <p className="text-xs font-bold text-slate-900 mb-1">Assigned Scope</p>
+            <p className="text-xs text-slate-600">
+              {admin.ministry ? admin.ministry : "Global access across all ministries and branches"}
+            </p>
           </div>
 
-          {/* Login activity */}
-          <div className="mb-5">
-            <p style={{ fontSize: "13px", fontWeight: 700, color: DARK, fontFamily: "var(--font-label)", marginBottom: "10px" }}>Recent Login Activity</p>
-            {loginActivity.map((l, i) => (
-              <div key={i} className="py-2.5" style={{ borderBottom: "1px solid #F3F2ED" }}>
-                <p style={{ fontSize: "12px", fontWeight: 600, color: DARK, fontFamily: "var(--font-label)" }}>{l.device}</p>
-                <p style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>{l.location} · {l.time}</p>
-              </div>
-            ))}
+          {/* Login Activity */}
+          <div className="p-4 rounded-2xl bg-white border border-[#E5E3DC]">
+            <p className="text-xs font-bold text-slate-900 mb-3">Recent Security Sessions</p>
+            <div className="space-y-2.5">
+              {loginSessions.map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <div key={i} className="flex items-center gap-3 text-xs">
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+                      <Icon size={14} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-800 truncate">{s.device}</p>
+                      <p className="text-[11px] text-slate-400">
+                        {s.location} · {s.time}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Actions */}
           {!isSuper && (
-            <div className="flex flex-col gap-2">
-              <button className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90" style={{ background: `rgba(200,134,10,0.08)`, color: BRAND, fontFamily: "var(--font-label)" }}>
-                Edit Role
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={handleToggleSuspend}
+                className="w-full py-2.5 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                style={{
+                  backgroundColor:
+                    admin.status === "Suspended"
+                      ? "rgba(16, 185, 129, 0.1)"
+                      : "rgba(200, 134, 10, 0.1)",
+                  color: admin.status === "Suspended" ? "#047857" : GOLD_DARK,
+                  border: `1px solid ${
+                    admin.status === "Suspended" ? "#A7F3D0" : "rgba(200, 134, 10, 0.25)"
+                  }`,
+                }}
+              >
+                <AlertTriangle size={13} />
+                <span>{admin.status === "Suspended" ? "Reactivate Account" : "Suspend Access"}</span>
               </button>
-              <button className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90" style={{ background: "#F5F4EF", color: DARK, fontFamily: "var(--font-label)" }}>
-                Reset Password
-              </button>
-              <button onClick={handleSuspend} className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90" style={{ background: "rgba(245,158,11,0.1)", color: "#D97706", fontFamily: "var(--font-label)" }}>
-                {admin.status === "Suspended" ? "Reactivate Account" : "Suspend Account"}
-              </button>
-              <button className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90" style={{ background: "rgba(239,68,68,0.08)", color: "#DC2626", fontFamily: "var(--font-label)" }}>
-                Remove Admin
+
+              <button
+                type="button"
+                className="w-full py-2.5 rounded-xl text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Trash2 size={13} />
+                <span>Remove Administrator</span>
               </button>
             </div>
           )}
@@ -502,122 +975,152 @@ function AdminDetailSlideOver({ admin, onClose, onUpdate }: { admin: Admin; onCl
   );
 }
 
-// ─── Manage Roles Page ──────────────────────────────────────────────────────────
+// ─── Modal: Manage Roles ───────────────────────────────────────────────────────
 const DEFAULT_ROLES = [
-  { name: "Super Admin",        icon: Crown, color: "#1A0533", count: 1, isDefault: true },
-  { name: "Senior Pastor",      icon: Church, color: "#7C3AED", count: 1, isDefault: true },
-  { name: "Finance Manager",    icon: Wallet, color: "#16A34A", count: 1, isDefault: true },
-  { name: "Media & Comms",      icon: Megaphone, color: "#2563EB", count: 1, isDefault: true },
-  { name: "Events Coordinator", icon: Ticket, color: "#D97706", count: 1, isDefault: false },
-  { name: "Member Care",        icon: Users, color: "#0D9488", count: 1, isDefault: false },
-  { name: "IT / Technical",     icon: Monitor, color: "#6B7280", count: 0, isDefault: false },
+  { name: "Super Admin", icon: Crown, color: "#78350F", count: 1, isDefault: true },
+  { name: "Senior Pastor", icon: Church, color: "#6D28D9", count: 1, isDefault: true },
+  { name: "Finance Manager", icon: Wallet, color: "#047857", count: 1, isDefault: true },
+  { name: "Media & Comms", icon: Megaphone, color: "#1D4ED8", count: 1, isDefault: true },
+  { name: "Events Coordinator", icon: Ticket, color: "#C8860A", count: 1, isDefault: false },
+  { name: "Member Care", icon: Users, color: "#0F766E", count: 1, isDefault: false },
+  { name: "IT / Technical", icon: Monitor, color: "#4B5563", count: 0, isDefault: false },
 ];
 
-function ManageRolesPanel({ onClose }: { onClose: () => void }) {
+function ManageRolesModal({ onClose }: { onClose: () => void }) {
   const [roles, setRoles] = useState(DEFAULT_ROLES);
   const [selected, setSelected] = useState(DEFAULT_ROLES[0]);
-  const [newRoleName, setNewRoleName] = useState("");
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-40 transition-opacity"
+        onClick={onClose}
+      />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-3xl rounded-2xl shadow-2xl flex overflow-hidden" style={{ background: "#fff", maxHeight: "85vh" }}>
-          {/* Left list */}
-          <div className="flex flex-col" style={{ width: "240px", borderRight: "1px solid #EEEDE8", background: "#FAFAF8" }}>
-            <div className="px-4 py-4" style={{ borderBottom: "1px solid #EEEDE8" }}>
-              <p style={{ fontSize: "14px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)" }}>Roles</p>
+        <div className="w-full max-w-3xl rounded-3xl shadow-2xl bg-white border border-[#E5E3DC] flex flex-col md:flex-row overflow-hidden max-h-[85vh]">
+          {/* Left Column: Roles Sidebar */}
+          <div className="w-full md:w-64 bg-[#FAF8F5] border-r border-[#EAE7DC] flex flex-col">
+            <div className="p-4 border-b border-[#EAE7DC]">
+              <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                System Roles
+              </p>
             </div>
-            <div className="flex-1 overflow-y-auto py-2 px-2">
-              {roles.map(r => (
-                <button
-                  key={r.name}
-                  onClick={() => setSelected(r)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl mb-0.5 text-left transition-all"
-                  style={{ background: selected.name === r.name ? `rgba(200,134,10,0.08)` : "transparent" }}
-                >
-                  <r.icon size={14} color={r.color} />
-                  <div className="flex-1 min-w-0">
-                    <p style={{ fontSize: "12px", fontWeight: 600, color: DARK, fontFamily: "var(--font-label)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>
-                    <p style={{ fontSize: "11px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>{r.count} admin{r.count !== 1 ? "s" : ""}</p>
-                  </div>
-                  {r.isDefault && (
-                    <span style={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", fontFamily: "var(--font-label)", letterSpacing: "0.05em" }}>DEFAULT</span>
-                  )}
-                </button>
-              ))}
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              {roles.map((r) => {
+                const Icon = r.icon;
+                const isSelected = selected.name === r.name;
+                return (
+                  <button
+                    key={r.name}
+                    type="button"
+                    onClick={() => setSelected(r)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
+                    style={{
+                      backgroundColor: isSelected ? "rgba(200, 134, 10, 0.12)" : "transparent",
+                      color: isSelected ? GOLD_DARK : "#334155",
+                      fontWeight: isSelected ? 700 : 500,
+                    }}
+                  >
+                    <Icon size={14} style={{ color: r.color }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs truncate">{r.name}</p>
+                      <p className="text-[10px] text-slate-400">
+                        {r.count} admin{r.count !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    {r.isDefault && (
+                      <span className="text-[9px] font-bold text-slate-400 bg-slate-200/60 px-1 rounded">
+                        SYS
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-            <div className="p-3" style={{ borderTop: "1px solid #EEEDE8" }}>
+            <div className="p-3 border-t border-[#EAE7DC]">
               <button
-                className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
-                style={{ background: BRAND, color: "#fff", fontFamily: "var(--font-label)" }}
+                type="button"
                 onClick={() => {
-                  const name = `Custom Role ${roles.filter(r => r.name.startsWith("Custom")).length + 1}`;
-                  const nr = { name, icon: Settings, color: BRAND, count: 0, isDefault: false };
-                  setRoles(r => [...r, nr]);
-                  setSelected(nr);
+                  const customName = `Custom Role ${roles.length - 6}`;
+                  const newR = {
+                    name: customName,
+                    icon: Settings,
+                    color: BRAND_GOLD,
+                    count: 0,
+                    isDefault: false,
+                  };
+                  setRoles((prev) => [...prev, newR]);
+                  setSelected(newR);
                 }}
+                className="w-full py-2 rounded-xl text-xs font-semibold text-white transition-colors shadow-2xs"
+                style={{ backgroundColor: BRAND_GOLD }}
               >
-                + Create Custom Role
+                + New Custom Role
               </button>
             </div>
           </div>
 
-          {/* Right editor */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #EEEDE8" }}>
-              <p style={{ fontSize: "14px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)" }}>Edit: {selected.name}</p>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-50"><X size={18} color="#9CA3AF" /></button>
+          {/* Right Column: Role Editor */}
+          <div className="flex-1 flex flex-col bg-white overflow-hidden">
+            <div className="p-5 border-b border-[#EAE7DC] flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900">Role: {selected.name}</h4>
+                <p className="text-xs text-slate-500">Configure privileges and assigned scope</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              <div className="mb-4">
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Role Name</label>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Role Label
+                </label>
                 <input
                   defaultValue={selected.name}
                   disabled={selected.name === "Super Admin"}
-                  className="w-full px-3.5 py-2.5 rounded-xl outline-none"
-                  style={{ border: "1px solid #E5E3DC", background: selected.name === "Super Admin" ? "#F5F4EF" : "#FAFAF8", fontSize: "13px", color: DARK, fontFamily: "var(--font-label)" }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#E5E3DC] text-xs text-slate-900 bg-slate-50 focus:outline-none focus:border-[#C8860A] disabled:opacity-60"
                 />
               </div>
-              <div className="mb-4 flex items-center gap-4">
-                <div>
-                  <label style={{ fontSize: "12px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Badge Color</label>
-                  <input type="color" defaultValue={selected.color} className="w-10 h-10 rounded-lg cursor-pointer" style={{ border: "1px solid #E5E3DC" }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: "12px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Icon</label>
-                  <div className="flex gap-2">
-                    {[Crown, Church, Wallet, Megaphone, Ticket, Users, Monitor, Settings, Star, KeyRound].map(Icon => (
-                      <button key={Icon.name} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors" style={{ color: "#374151" }}><Icon size={18} /></button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="mb-5">
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#374151", fontFamily: "var(--font-label)", display: "block", marginBottom: "6px" }}>Description</label>
-                <input
-                  placeholder="Brief description of this role's responsibilities"
-                  className="w-full px-3.5 py-2.5 rounded-xl outline-none"
-                  style={{ border: "1px solid #E5E3DC", background: "#FAFAF8", fontSize: "13px", color: DARK, fontFamily: "var(--font-label)" }}
-                />
-              </div>
+
               <div>
-                <p style={{ fontSize: "13px", fontWeight: 700, color: DARK, fontFamily: "var(--font-label)", marginBottom: "12px" }}>Permissions</p>
-                <PermissionMatrix role={selected.name} />
+                <p className="text-xs font-bold text-slate-900 mb-2">Granted Permissions</p>
+                <div className="space-y-3">
+                  {PERMISSION_MATRIX.map((g) => (
+                    <div key={g.group} className="rounded-xl border border-[#E5E3DC] p-3">
+                      <p
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5"
+                        style={{ color: GOLD_DARK }}
+                      >
+                        {g.group}
+                      </p>
+                      <div className="space-y-1">
+                        {g.perms.map((p) => (
+                          <div key={p.name} className="flex items-center justify-between py-1 text-xs">
+                            <span className="text-slate-700">{p.name}</span>
+                            <span className="text-emerald-600 font-semibold">Enabled</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-5 py-4" style={{ borderTop: "1px solid #EEEDE8" }}>
-              <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold" style={{ background: BRAND, color: "#fff", fontFamily: "var(--font-label)" }}>
-                <Check size={12} /> Save Role
+
+            <div className="p-4 border-t border-[#EAE7DC] flex items-center justify-between">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-white shadow-2xs transition-all"
+                style={{ backgroundColor: BRAND_GOLD }}
+              >
+                Save Changes
               </button>
-              <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold" style={{ border: "1px solid #E5E3DC", color: DARK, fontFamily: "var(--font-label)" }}>
-                <Copy size={12} /> Duplicate
-              </button>
-              {!selected.isDefault && (
-                <button className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold ml-auto" style={{ color: "#DC2626", fontFamily: "var(--font-label)" }}>
-                  <Trash2 size={12} /> Delete Role
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -626,226 +1129,342 @@ function ManageRolesPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-// ─── Main Page ──────────────────────────────────────────────────────────────────
+// ─── Main Admin Management Page ────────────────────────────────────────────────
 export function AdminManagementPage() {
   const [admins, setAdmins] = useState<Admin[]>(INITIAL_ADMINS);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showInvite, setShowInvite] = useState(false);
   const [showRoles, setShowRoles] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [actionMenu, setActionMenu] = useState<number | null>(null);
 
-  const filtered = admins.filter(a =>
-    a.name.toLowerCase().includes(search.toLowerCase()) ||
-    a.email.toLowerCase().includes(search.toLowerCase()) ||
-    a.role.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredAdmins = useMemo(() => {
+    return admins.filter((a) => {
+      const matchesSearch =
+        a.name.toLowerCase().includes(search.toLowerCase()) ||
+        a.email.toLowerCase().includes(search.toLowerCase()) ||
+        a.role.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "All" || a.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [admins, search, statusFilter]);
 
   const stats = [
-    { label: "Total Admins",     value: admins.length,                              dot: undefined },
-    { label: "Active Now",       value: admins.filter(a => a.lastActive === "Active now").length, dot: "#16A34A" },
-    { label: "Pending Invites",  value: admins.filter(a => a.status === "Invited").length,        dot: "#D97706" },
-    { label: "Custom Roles",     value: 4,                                          dot: undefined },
+    {
+      label: "Total Leaders",
+      value: admins.length,
+      sub: "Across all departments",
+      dot: undefined,
+    },
+    {
+      label: "Active Today",
+      value: admins.filter((a) => a.lastActive.includes("Active") || a.lastActive.includes("hours"))
+        .length,
+      sub: "Logged in past 24h",
+      dot: "#10B981",
+    },
+    {
+      label: "Pending Invites",
+      value: admins.filter((a) => a.status === "Invited").length,
+      sub: "Awaiting activation",
+      dot: BRAND_GOLD,
+    },
+    {
+      label: "Custom Roles",
+      value: 7,
+      sub: "Configured permissions",
+      dot: undefined,
+    },
   ];
 
-  const handleInvite = (admin: Admin) => setAdmins(a => [...a, admin]);
+  const handleInvite = (newAdmin: Admin) => {
+    setAdmins((prev) => [...prev, newAdmin]);
+  };
+
   const handleUpdate = (updated: Admin) => {
-    setAdmins(a => a.map(x => x.id === updated.id ? updated : x));
+    setAdmins((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
     setSelectedAdmin(updated);
   };
 
-  const handleSuspend = (id: number) => {
-    setAdmins(a => a.map(x => x.id === id ? { ...x, status: x.status === "Suspended" ? "Active" : "Suspended" as AdminStatus } : x));
-    setActionMenu(null);
-  };
-
   const handleRemove = (id: number) => {
-    setAdmins(a => a.filter(x => x.id !== id));
+    setAdmins((prev) => prev.filter((a) => a.id !== id));
     setActionMenu(null);
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F5F4EF" }}>
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
-          {/* Header */}
-          <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
-            <div>
-              <h2 style={{ fontSize: "22px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)" }}>Admin Management</h2>
-              <p style={{ fontSize: "13px", color: "#9CA3AF", fontFamily: "var(--font-label)", marginTop: "2px" }}>
-                Control who has access to ChurchLedger and what they can do
-              </p>
-            </div>
+    <div className="flex-1 flex flex-col bg-[#F9F8F4] text-slate-800 font-eden min-h-screen overflow-y-auto selection:bg-amber-100">
+      <div className="max-w-6xl w-full mx-auto px-4 md:px-8 py-8 space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowRoles(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all hover:bg-gray-50"
-                style={{ border: "1px solid #E5E3DC", color: DARK, fontFamily: "var(--font-label)", background: "#fff" }}
-              >
-                <Shield size={14} /> Manage Roles
-              </button>
-              <button
-                onClick={() => setShowInvite(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all hover:opacity-90"
-                style={{ background: BRAND, color: "#fff", fontFamily: "var(--font-label)" }}
-              >
-                <UserPlus size={14} /> Invite Admin
-              </button>
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BRAND_GOLD }} />
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                Admin Management
+              </h1>
             </div>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Control leadership permissions, invite ministry coordinators, and audit administrative activity.
+            </p>
           </div>
 
-          {/* Stats strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-            {stats.map(s => (
-              <div key={s.label} className="rounded-2xl p-4" style={{ background: "#fff", border: "1px solid #EEEDE8" }}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  {s.dot && <span className="w-2 h-2 rounded-full inline-block" style={{ background: s.dot }} />}
-                  <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>{s.label}</p>
-                </div>
-                <p style={{ fontSize: "26px", fontWeight: 700, color: DARK, fontFamily: "var(--font-heading)" }}>{s.value}</p>
-              </div>
-            ))}
-          </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setShowRoles(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-white border border-[#E5E3DC] text-slate-700 hover:bg-slate-50 hover:border-slate-300 shadow-2xs transition-all"
+            >
+              <Shield size={14} className="text-slate-500" />
+              <span>Manage Roles</span>
+            </button>
 
-          {/* Search */}
-          <div className="relative mb-4">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#9CA3AF" }} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search admins by name, email, or role..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl outline-none"
-              style={{ border: "1px solid #E5E3DC", background: "#fff", fontSize: "13px", color: DARK, fontFamily: "var(--font-label)" }}
-            />
-          </div>
-
-          {/* Table */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: "1px solid #EEEDE8" }}>
-            {/* Table header — desktop */}
-            <div className="hidden md:grid items-center gap-4 px-5 py-3" style={{ gridTemplateColumns: "2fr 1.5fr 2fr auto auto auto", borderBottom: "1px solid #F3F2ED" }}>
-              {["Admin", "Role", "Permissions", "Last Active", "Status", ""].map(h => (
-                <p key={h} style={{ fontSize: "11px", fontWeight: 700, color: "#9CA3AF", fontFamily: "var(--font-label)", letterSpacing: "0.06em" }}>{h}</p>
-              ))}
-            </div>
-
-            {filtered.length === 0 && (
-              <div className="py-12 text-center">
-                <p style={{ fontSize: "14px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>No admins match your search</p>
-              </div>
-            )}
-
-            {filtered.map((admin, idx) => {
-              const isSuper = admin.role === "Super Admin";
-              return (
-                <div
-                  key={admin.id}
-                  className="flex md:grid items-center gap-3 md:gap-4 px-4 md:px-5 py-3.5 cursor-pointer transition-colors hover:bg-[#F9F8F4] relative flex-wrap"
-                  style={{ gridTemplateColumns: "2fr 1.5fr 2fr auto auto auto", borderBottom: idx < filtered.length - 1 ? "1px solid #F3F2ED" : undefined }}
-                  onClick={() => setSelectedAdmin(admin)}
-                >
-                  {/* Avatar + name */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Avatar initials={admin.initials} color={admin.color} size={36} />
-                    <div className="min-w-0">
-                      <p style={{ fontSize: "13px", fontWeight: 600, color: DARK, fontFamily: "var(--font-label)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{admin.name}</p>
-                      <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{admin.email}</p>
-                    </div>
-                  </div>
-
-                  {/* Role */}
-                  <div className="hidden md:block"><RoleBadge role={admin.role} /></div>
-
-                  {/* Permissions summary */}
-                  <div className="hidden md:block">
-                    <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>
-                      {admin.role === "Super Admin" ? "All permissions" :
-                       admin.role === "Finance Manager" ? "Finance, reports" :
-                       admin.role === "Media & Comms" ? "Announcements, media" :
-                       admin.role === "Events Coordinator" ? "Events, attendance" :
-                       admin.role === "Member Care" ? "Members, messages" :
-                       "Standard access"}
-                    </p>
-                  </div>
-
-                  {/* Last active */}
-                  <div className="hidden md:flex items-center gap-1.5">
-                    <Clock size={12} style={{ color: "#9CA3AF", flexShrink: 0 }} />
-                    <span style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)", whiteSpace: "nowrap" }}>{admin.lastActive}</span>
-                  </div>
-
-                  {/* Status */}
-                  <div className="hidden md:block"><StatusBadge status={admin.status} /></div>
-
-                  {/* Actions */}
-                  <div className="ml-auto md:ml-0 relative" onClick={e => e.stopPropagation()}>
-                    {!isSuper && (
-                      <button
-                        onClick={() => setActionMenu(actionMenu === admin.id ? null : admin.id)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <MoreHorizontal size={16} style={{ color: "#9CA3AF" }} />
-                      </button>
-                    )}
-                    {actionMenu === admin.id && (
-                      <div className="absolute right-0 top-8 rounded-xl shadow-xl z-30 py-1.5 min-w-40" style={{ background: "#fff", border: "1px solid #EEEDE8" }}>
-                        <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ fontFamily: "var(--font-label)", color: DARK }}
-                          onClick={() => { setSelectedAdmin(admin); setActionMenu(null); }}>
-                          <Eye size={13} /> View Details
-                        </button>
-                        <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ fontFamily: "var(--font-label)", color: DARK }}
-                          onClick={() => { setActionMenu(null); }}>
-                          <Edit3 size={13} /> Edit Role
-                        </button>
-                        {admin.status === "Invited" && (
-                          <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ fontFamily: "var(--font-label)", color: BRAND }}
-                            onClick={() => setActionMenu(null)}>
-                            <Send size={13} /> Resend Invite
-                          </button>
-                        )}
-                        <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2" style={{ fontFamily: "var(--font-label)", color: "#D97706" }}
-                          onClick={() => handleSuspend(admin.id)}>
-                          <AlertTriangle size={13} /> {admin.status === "Suspended" ? "Reactivate" : "Suspend"}
-                        </button>
-                        <div style={{ borderTop: "1px solid #F3F2ED", margin: "4px 0" }} />
-                        <button className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 flex items-center gap-2" style={{ fontFamily: "var(--font-label)", color: "#DC2626" }}
-                          onClick={() => handleRemove(admin.id)}>
-                          <Trash2 size={13} /> Remove
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Activity log note */}
-          <div className="mt-6 rounded-2xl p-4 flex items-center gap-3" style={{ background: "#fff", border: "1px solid #EEEDE8" }}>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `rgba(200,134,10,0.08)` }}>
-              <Clock size={14} style={{ color: BRAND }} />
-            </div>
-            <div>
-              <p style={{ fontSize: "13px", fontWeight: 600, color: DARK, fontFamily: "var(--font-label)" }}>Recent Activity</p>
-              <p style={{ fontSize: "12px", color: "#9CA3AF", fontFamily: "var(--font-label)" }}>
-                Pastor Ama edited member profile · Jun 4, 9:42 AM &nbsp;·&nbsp; Kweku approved expense · Jun 4, 8:15 AM
-              </p>
-            </div>
-            <button className="ml-auto flex-shrink-0 text-sm font-semibold" style={{ color: BRAND, fontFamily: "var(--font-label)" }}>
-              Export Log
+            <button
+              type="button"
+              onClick={() => setShowInvite(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white shadow-xs transition-all cursor-pointer"
+              style={{
+                backgroundColor: BRAND_GOLD,
+                boxShadow: `0 4px 14px ${BRAND_GOLD}35`,
+              }}
+            >
+              <UserPlus size={14} />
+              <span>Invite Admin</span>
             </button>
           </div>
         </div>
+
+        {/* Stats Strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="p-4 rounded-2xl bg-white border border-[#EAE7DC] shadow-xs hover:border-[#C8860A]/40 transition-all"
+            >
+              <div className="flex items-center gap-1.5">
+                {s.dot && (
+                  <span
+                    className="w-2 h-2 rounded-full inline-block animate-pulse"
+                    style={{ backgroundColor: s.dot }}
+                  />
+                )}
+                <span className="text-xs font-medium text-slate-500">{s.label}</span>
+              </div>
+              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">
+                {s.value}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">{s.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Controls Toolbar: Search & Status Filters */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              size={15}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+            />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, email, or role..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#E5E3DC] bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C8860A]/20 focus:border-[#C8860A] shadow-2xs"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white border border-[#E5E3DC] shadow-2xs overflow-x-auto">
+            {["All", "Active", "Invited", "Suspended"].map((status) => {
+              const isActive = statusFilter === status;
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setStatusFilter(status)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                  style={{
+                    backgroundColor: isActive ? BRAND_GOLD : "transparent",
+                    color: isActive ? "#FFFFFF" : "#4B5563",
+                    boxShadow: isActive ? `0 2px 8px ${BRAND_GOLD}35` : "none",
+                  }}
+                >
+                  {status}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Admins Table */}
+        <div className="rounded-3xl bg-white border border-[#EAE7DC] shadow-sm overflow-hidden">
+          {/* Table Header */}
+          <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3.5 bg-[#FAF8F5] border-b border-[#EAE7DC] text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <div className="col-span-4">Administrator</div>
+            <div className="col-span-3">Assigned Role</div>
+            <div className="col-span-2">Last Active</div>
+            <div className="col-span-2">Account Status</div>
+            <div className="col-span-1 text-right">Actions</div>
+          </div>
+
+          {/* Table Rows */}
+          <div className="divide-y divide-slate-100">
+            {filteredAdmins.length === 0 ? (
+              <div className="py-12 text-center text-slate-400">
+                <p className="text-sm font-medium">No administrators found</p>
+                <p className="text-xs mt-1">Try adjusting your search or filters.</p>
+              </div>
+            ) : (
+              filteredAdmins.map((admin) => {
+                const isSuper = admin.role === "Super Admin";
+                return (
+                  <div
+                    key={admin.id}
+                    onClick={() => setSelectedAdmin(admin)}
+                    className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 items-center hover:bg-[#FDFCF7] cursor-pointer transition-colors"
+                  >
+                    {/* Member Info */}
+                    <div className="col-span-4 flex items-center gap-3.5 min-w-0">
+                      <Avatar initials={admin.initials} color={admin.color} size={38} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-xs font-bold text-slate-900 truncate">{admin.name}</p>
+                          {admin.isCurrentUser && (
+                            <span
+                              className="px-1.5 py-0.2 rounded text-[9px] font-bold"
+                              style={{
+                                backgroundColor: "rgba(200, 134, 10, 0.12)",
+                                color: GOLD_DARK,
+                              }}
+                            >
+                              YOU
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 truncate">{admin.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Role */}
+                    <div className="col-span-3">
+                      <RoleBadge role={admin.role} />
+                    </div>
+
+                    {/* Last Active */}
+                    <div className="col-span-2 flex items-center gap-1 text-xs text-slate-500">
+                      <Clock size={12} className="text-slate-400 flex-shrink-0" />
+                      <span className="truncate">{admin.lastActive}</span>
+                    </div>
+
+                    {/* Status */}
+                    <div className="col-span-2">
+                      <StatusBadge status={admin.status} />
+                    </div>
+
+                    {/* Menu Actions */}
+                    <div
+                      className="col-span-1 text-right relative"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActionMenu(actionMenu === admin.id ? null : admin.id)
+                        }
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                      >
+                        <MoreHorizontal size={16} />
+                      </button>
+
+                      {actionMenu === admin.id && (
+                        <div className="absolute right-0 top-8 z-30 w-44 rounded-2xl bg-white border border-[#E5E3DC] shadow-xl p-1.5 space-y-0.5 text-left text-xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedAdmin(admin);
+                              setActionMenu(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium"
+                          >
+                            <Eye size={13} />
+                            <span>View Dossier</span>
+                          </button>
+
+                          {!isSuper && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedAdmin(admin);
+                                  setActionMenu(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium"
+                              >
+                                <Edit3 size={13} />
+                                <span>Edit Privileges</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleRemove(admin.id)}
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 font-medium"
+                              >
+                                <Trash2 size={13} />
+                                <span>Remove Admin</span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Audit Trail Banner */}
+        <div className="p-4 rounded-2xl bg-white border border-[#EAE7DC] shadow-2xs flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center"
+              style={{
+                backgroundColor: "rgba(200, 134, 10, 0.1)",
+                color: BRAND_GOLD,
+              }}
+            >
+              <ShieldCheck size={16} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-900">Security Audit Trail</p>
+              <p className="text-[11px] text-slate-500">
+                Super Admin actions and privilege alterations are cryptographically signed.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#E5E3DC] hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors"
+          >
+            <Download size={13} />
+            <span>Export Audit Log (CSV)</span>
+          </button>
+        </div>
       </div>
 
-      {/* Overlays */}
-      {showInvite && <InviteSlideOver onClose={() => setShowInvite(false)} onInvite={handleInvite} />}
-      {selectedAdmin && <AdminDetailSlideOver admin={selectedAdmin} onClose={() => setSelectedAdmin(null)} onUpdate={handleUpdate} />}
-      {showRoles && <ManageRolesPanel onClose={() => setShowRoles(false)} />}
-
-      {/* Close action menu on outside click */}
-      {actionMenu !== null && (
-        <div className="fixed inset-0 z-20" onClick={() => setActionMenu(null)} />
+      {/* Slide-Overs and Modals */}
+      {showInvite && (
+        <InviteSlideOver onClose={() => setShowInvite(false)} onInvite={handleInvite} />
       )}
+      {selectedAdmin && (
+        <AdminDetailSlideOver
+          admin={selectedAdmin}
+          onClose={() => setSelectedAdmin(null)}
+          onUpdate={handleUpdate}
+        />
+      )}
+      {showRoles && <ManageRolesModal onClose={() => setShowRoles(false)} />}
     </div>
   );
 }

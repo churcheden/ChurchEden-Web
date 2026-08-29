@@ -37,7 +37,7 @@ export function WelcomeStep() {
         navigate("/onboarding/verify-email");
         return;
       }
-      navigate("/onboarding/church-profile");
+      navigate("/onboarding/church-basics");
     } catch (err) {
       if (err instanceof ApiError && err.code === "USER_EXISTS") {
         setError("An account with this email already exists. Try signing in instead.");
@@ -54,7 +54,7 @@ export function WelcomeStep() {
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle();
-      navigate("/dashboard");
+      navigate("/onboarding/church-basics");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not start Google sign-in.");
     } finally {
@@ -86,7 +86,7 @@ export function WelcomeStep() {
           type="button"
           onClick={handleGoogleSignUp}
           disabled={isGoogleLoading}
-          className="flex w-full items-center justify-center gap-3 rounded-lg border border-eden-outline-variant/30 bg-eden-surface-container-low py-3 transition-all duration-300 hover:bg-eden-surface-container-high active:scale-[0.98] disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-3 rounded-lg border border-eden-outline-variant/30 bg-eden-surface-container-low py-3 transition-all duration-300 hover:bg-eden-surface-container-high active:scale-[0.98] disabled:opacity-60 cursor-pointer"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -113,7 +113,7 @@ export function WelcomeStep() {
           )}
 
           <EdenField
-            label="Email*"
+            label="Email"
             type="email"
             placeholder="Enter your email"
             icon={<Mail size={18} />}
@@ -123,7 +123,7 @@ export function WelcomeStep() {
           />
           <div>
             <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-eden-on-surface-variant">
-              Password*
+              Password <span className="text-amber-500">*</span>
             </label>
             <EdenPasswordInput
               id="password"
@@ -137,7 +137,7 @@ export function WelcomeStep() {
           </div>
           <div>
             <label htmlFor="confirm-password" className="mb-1.5 block text-sm font-medium text-eden-on-surface-variant">
-              Confirm password*
+              Confirm password <span className="text-amber-500">*</span>
             </label>
             <EdenPasswordInput
               id="confirm-password"

@@ -25,7 +25,8 @@ export function AuthCallback() {
     const complete = async () => {
       try {
         await setSessionFromTokens(accessToken);
-        navigate("/dashboard", { replace: true });
+        // New Google sign-in routes straight to church basics onboarding step
+        navigate("/onboarding/church-basics", { replace: true });
       } catch {
         setError("Could not complete sign-in. Please try again.");
       }

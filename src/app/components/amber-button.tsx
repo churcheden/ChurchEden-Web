@@ -1,8 +1,13 @@
-import { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { motion } from "motion/react";
 
-interface AmberButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode;
+type NativeButtonProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "onAnimationStart" | "onAnimationEnd" | "onDrag" | "onDragStart" | "onDragEnd"
+>;
+
+interface AmberButtonProps extends NativeButtonProps {
+  children: ReactNode;
   variant?: "primary" | "glass";
 }
 

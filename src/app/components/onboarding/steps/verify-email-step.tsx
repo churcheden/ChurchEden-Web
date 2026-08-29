@@ -33,7 +33,7 @@ export function VerifyEmailStep() {
     setIsSubmitting(true);
     try {
       await verifyEmail(email, otp);
-      navigate("/onboarding/church-profile");
+      navigate("/onboarding/church-basics");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Verification failed.");
     } finally {
@@ -85,7 +85,7 @@ export function VerifyEmailStep() {
         )}
 
         <EdenField
-          label="Verification code*"
+          label="Verification code"
           type="text"
           inputMode="numeric"
           pattern="[0-9]{6}"
@@ -107,7 +107,7 @@ export function VerifyEmailStep() {
           type="button"
           onClick={handleResend}
           disabled={isResending}
-          className="font-bold text-eden-primary hover:underline underline-offset-4 disabled:opacity-60"
+          className="font-bold text-eden-primary hover:underline underline-offset-4 disabled:opacity-60 cursor-pointer"
         >
           {isResending ? "Sending..." : "Resend code"}
         </button>

@@ -26,6 +26,7 @@ import {
 import { QRCodeCanvas } from "qrcode.react";
 import { toast, Toaster } from "sonner";
 import { FormDialog, DIALOG_BODY } from "./form-dialog";
+import justLogoTransparent from "@/assets/Just-logo-transparent.png";
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -386,7 +387,21 @@ export function QRAttendancePage() {
             </span>
           </div>
           <div className="mx-auto w-72 h-72 bg-white rounded-3xl p-5 flex items-center justify-center shadow-2xl">
-            <QRCodeCanvas ref={qrCanvasRef} value={attendUrl} size={248} bgColor="#FFFFFF" fgColor={NAVY} level="M" includeMargin />
+            <QRCodeCanvas
+              ref={qrCanvasRef}
+              value={attendUrl}
+              size={248}
+              bgColor="#FFFFFF"
+              fgColor={NAVY}
+              level="H"
+              includeMargin
+              imageSettings={{
+                src: justLogoTransparent,
+                height: 48,
+                width: 48,
+                excavate: true,
+              }}
+            />
           </div>
           <div className="mt-6" style={{ color: "#fff", fontFamily: "var(--font-label)" }}>
             <div className="text-xl font-bold">{service.name}</div>
@@ -520,8 +535,14 @@ export function QRAttendancePage() {
                         size={196}
                         bgColor="#FFFFFF"
                         fgColor={NAVY}
-                        level="M"
+                        level="H"
                         includeMargin
+                        imageSettings={{
+                          src: justLogoTransparent,
+                          height: 38,
+                          width: 38,
+                          excavate: true,
+                        }}
                       />
                     </div>
                     {status === "active" && (
