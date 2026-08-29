@@ -10,6 +10,7 @@ export const ONBOARDING_STEPS: OnboardingStepMeta[] = [
   { path: "church-basics", label: "Church Basics" },
   { path: "location-contact", label: "Location & Contact" },
   { path: "service-branding", label: "Service & Branding" },
+  { path: "ministries", label: "Ministries" },
   { path: "complete", label: "Complete" },
 ];
 
@@ -18,6 +19,14 @@ export interface ServiceTimeItem {
   label: string;
   day: string;
   time: string;
+}
+
+export interface CustomMinistryItem {
+  id: string;
+  name: string;
+  type: "MINISTRY" | "DEPARTMENT";
+  description?: string;
+  icon?: string;
 }
 
 export interface OnboardingData {
@@ -43,6 +52,10 @@ export interface OnboardingData {
   serviceTimes: ServiceTimeItem[];
   churchLogo: File | null;
   brandColor: string;
+
+  // Step 3: Ministries & Departments selection
+  selectedMinistryIds: string[];
+  customMinistries: CustomMinistryItem[];
 }
 
 const DEFAULT_ONBOARDING_DATA: OnboardingData = {
@@ -71,6 +84,10 @@ const DEFAULT_ONBOARDING_DATA: OnboardingData = {
   ],
   churchLogo: null,
   brandColor: "#F59E0B",
+
+  // Step 3: Ministries & Departments selection
+  selectedMinistryIds: [],
+  customMinistries: [],
 };
 
 interface OnboardingContextValue {

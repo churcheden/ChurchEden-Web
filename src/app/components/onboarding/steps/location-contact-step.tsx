@@ -109,7 +109,7 @@ export function LocationContactStep() {
     <OnboardingLayout
       stepPath="location-contact"
       stepNumber={2}
-      totalSteps={4}
+      totalSteps={5}
       title="Location & Contact"
       subtitle="Where is your church and how can people reach you?"
       heroImage={churchExterior}

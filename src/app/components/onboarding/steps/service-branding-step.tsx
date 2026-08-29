@@ -6,6 +6,7 @@ import {
   Upload,
   CheckCircle2,
   ArrowLeft,
+  ArrowRight,
   Heart,
 } from "lucide-react";
 import { OnboardingLayout } from "../onboarding-layout";
@@ -98,14 +99,14 @@ export function ServiceBrandingStep() {
       churchLogo: logoFile,
     });
 
-    navigate("/onboarding/complete");
+    navigate("/onboarding/ministries");
   };
 
   return (
     <OnboardingLayout
       stepPath="service-branding"
       stepNumber={3}
-      totalSteps={4}
+      totalSteps={5}
       title="Service Schedule & Branding"
       subtitle="Add your service times and upload your church logo."
       heroImage={churchWorship}
@@ -129,8 +130,8 @@ export function ServiceBrandingStep() {
             form="service-branding-form"
             className="bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/20 px-8 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all"
           >
-            <span>Complete Setup</span>
-            <CheckCircle2 size={16} />
+            <span>Next</span>
+            <ArrowRight size={14} />
           </EdenButton>
         </>
       }

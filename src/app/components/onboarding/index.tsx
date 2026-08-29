@@ -6,6 +6,7 @@ import { VerifyEmailStep } from "./steps/verify-email-step";
 import { ChurchBasicsStep } from "./steps/church-basics-step";
 import { LocationContactStep } from "./steps/location-contact-step";
 import { ServiceBrandingStep } from "./steps/service-branding-step";
+import { MinistriesStep } from "./steps/ministries-step";
 import { SetupCompleteStep } from "./steps/setup-complete-step";
 
 export function OnboardingFlow() {
@@ -18,10 +19,11 @@ export function OnboardingFlow() {
         <Route path="signin" element={<SignInStep />} />
         <Route path="verify-email" element={<VerifyEmailStep />} />
         
-        {/* 3-Step Church Profile Setup */}
+        {/* 4-Step Church Profile Setup */}
         <Route path="church-basics" element={<ChurchBasicsStep />} />
         <Route path="location-contact" element={<LocationContactStep />} />
         <Route path="service-branding" element={<ServiceBrandingStep />} />
+        <Route path="ministries" element={<MinistriesStep />} />
         
         {/* Backward compatibility redirect for old link */}
         <Route path="church-profile" element={<Navigate to="/onboarding/church-basics" replace />} />

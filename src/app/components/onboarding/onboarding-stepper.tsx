@@ -5,7 +5,8 @@ const PROFILE_FLOW_STEPS = [
   { path: "church-basics", label: "Church Basics", number: 1 },
   { path: "location-contact", label: "Location & Contact", number: 2 },
   { path: "service-branding", label: "Service & Branding", number: 3 },
-  { path: "complete", label: "Complete", number: 4 },
+  { path: "ministries", label: "Ministries", number: 4 },
+  { path: "complete", label: "Complete", number: 5 },
 ];
 
 interface OnboardingStepperProps {

@@ -66,7 +66,7 @@ export function ChurchBasicsStep() {
     <OnboardingLayout
       stepPath="church-basics"
       stepNumber={1}
-      totalSteps={4}
+      totalSteps={5}
       title="Church Basics"
       subtitle="Tell us the basic information about your church."
       heroImage={churchLeadership}
