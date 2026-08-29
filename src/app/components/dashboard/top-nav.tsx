@@ -1,4 +1,6 @@
 import { Menu, Search, Bell, Calendar, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router";
+import justLogoTransparent from "@/assets/Just-logo-transparent.png";
 
 interface TopNavProps {
   onMenuClick: () => void;
@@ -7,6 +9,7 @@ interface TopNavProps {
 }
 
 export function TopNav({ onMenuClick, pageTitle = "Church Overview", breadcrumb }: TopNavProps) {
+  const navigate = useNavigate();
   return (
     <header
       className="flex-shrink-0 flex items-center gap-4 px-5 lg:px-6"
@@ -56,6 +59,32 @@ export function TopNav({ onMenuClick, pageTitle = "Church Overview", breadcrumb 
 
       {/* Right section */}
       <div className="flex items-center gap-2 lg:gap-3 ml-auto">
+        {/* Ask Eden */}
+        <button
+          onClick={() => navigate("/eden-ai")}
+          className="flex items-center gap-2 pl-1.5 pr-2.5 h-9 rounded-full transition-colors flex-shrink-0"
+          style={{
+            background: "var(--eden-surface)",
+            border: "1px solid var(--eden-outline-variant)",
+          }}
+          title="Open Eden AI"
+        >
+          <img
+            src={justLogoTransparent}
+            alt=""
+            style={{ width: "17px", height: "17px", objectFit: "contain" }}
+          />
+          <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--eden-on-surface)", fontFamily: "var(--font-label)" }}>
+            Ask Eden
+          </span>
+          <span
+            className="hidden xl:inline-flex items-center px-1.5 py-0.5 rounded font-mono"
+            style={{ fontSize: "10px", color: "var(--eden-on-surface-variant)", background: "var(--eden-surface-container-low)" }}
+          >
+            Ctrl K
+          </span>
+        </button>
+
         {/* Date chip */}
         <div
           className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full"

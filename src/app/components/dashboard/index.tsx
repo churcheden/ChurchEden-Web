@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { Construction } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { TopNav } from "./top-nav";
@@ -59,6 +60,19 @@ function OverviewContent() {
 export function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<Page>(readPersistedPage);
+  const navigate = useNavigate();
+
+  // Global "Ask Eden" shortcut (Ctrl+K / ⌘K).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        navigate("/eden-ai");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [navigate]);
 
   // Persist the current dashboard page so a refresh keeps the user on it.
   useEffect(() => {

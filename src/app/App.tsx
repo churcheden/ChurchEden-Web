@@ -9,6 +9,7 @@ import { DemoPage } from "@/app/components/demo/demo-page";
 import { ResourcesPage } from "@/app/components/resources/resources-page";
 import { OnboardingFlow } from "@/app/components/onboarding";
 import { Dashboard } from "@/app/components/dashboard";
+import { EdenAIPage } from "@/app/components/eden-ai";
 
 export default function App() {
   return (
@@ -26,6 +27,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/eden-ai"
+        element={
+          <ProtectedRoute>
+            <EdenAIPage />
           </ProtectedRoute>
         }
       />
