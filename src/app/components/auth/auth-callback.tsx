@@ -5,35 +5,40 @@ import { useAuth } from "@/app/auth/auth-context";
 export function AuthCallback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { setSessionFromTokens } = useAuth();
+  const { hydrateUser, setSessionFromTokens } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const accessToken = searchParams.get("accessToken");
     const authError = searchParams.get("error");
+    const profileComplete = searchParams.get("profileComplete");
 
     if (authError) {
       setError("Google sign-in failed. Please try again.");
       return;
     }
 
-    if (!accessToken) {
-      setError("Missing access token from authentication callback.");
-      return;
-    }
-
     const complete = async () => {
       try {
-        await setSessionFromTokens(accessToken);
-        // New Google sign-in routes straight to church basics onboarding step
-        navigate("/onboarding/church-basics", { replace: true });
+        if (accessToken) {
+          await setSessionFromTokens(accessToken);
+        } else {
+          await hydrateUser();
+        }
+
+        // Redirect based on profile status or default to dashboard
+        if (profileComplete === "false") {
+          navigate("/onboarding/church-basics", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
       } catch {
         setError("Could not complete sign-in. Please try again.");
       }
     };
 
     void complete();
-  }, [navigate, searchParams, setSessionFromTokens]);
+  }, [navigate, searchParams, hydrateUser, setSessionFromTokens]);
 
   if (error) {
     return (

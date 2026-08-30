@@ -7,9 +7,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ApiError } from "@/lib/api-client";
+import { ApiError } from "@/lib/apiClient";
 import * as authApi from "@/lib/auth-api";
 import { authStorage } from "@/lib/auth-storage";
+import { env } from "@/env";
 import type { AuthUser } from "@/types/auth";
 
 interface AuthContextValue {
@@ -23,6 +24,7 @@ interface AuthContextValue {
   verifyEmail: (email: string, otp: string) => Promise<void>;
   resendVerification: () => Promise<void>;
   setSessionFromTokens: (accessToken: string, refreshToken?: string) => Promise<void>;
+  hydrateUser: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -31,28 +33,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const hydrateUser = useCallback(async () => {
-    const attempt = async () => {
-      const response = await authApi.getCurrentUser();
-      setUser(response.user);
-      return true;
-    };
-
+  const hydrateUser = useCallback(async (): Promise<boolean> => {
     try {
-      return await attempt();
+      const response = await authApi.getCurrentUser();
+      if (response && response.user) {
+        setUser(response.user);
+        return true;
+      }
+      return false;
     } catch (error) {
-      // The access token may have expired since last load — attempt a single
-      // token refresh before treating the session as invalid. This keeps
-      // authenticated users signed in across a page refresh instead of
-      // bouncing them back to onboarding.
       if (
         error instanceof ApiError &&
-        error.status === 401 &&
+        error.statusCode === 401 &&
         authStorage.getRefreshToken()
       ) {
         try {
           await authApi.refreshTokens();
-          return await attempt();
+          const retryResponse = await authApi.getCurrentUser();
+          if (retryResponse && retryResponse.user) {
+            setUser(retryResponse.user);
+            return true;
+          }
         } catch {
           setUser(null);
           return false;
@@ -65,10 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const bootstrap = async () => {
-      if (!authStorage.getAccessToken()) {
-        setIsLoading(false);
-        return;
-      }
       await hydrateUser();
       setIsLoading(false);
     };
@@ -89,23 +86,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string) => {
     const response = await authApi.register(email, password);
-    authStorage.setTokens(response.accessToken, response.refreshToken);
-    setUser(response.user);
+    if (response.accessToken) {
+      authStorage.setTokens(response.accessToken, response.refreshToken);
+    }
+    if (response.user) {
+      setUser(response.user);
+    }
     return { requiresVerification: response.requiresVerification };
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const response = await authApi.login(email, password);
-    authStorage.setTokens(response.accessToken, response.refreshToken);
-    setUser(response.user);
+    if (response.accessToken) {
+      authStorage.setTokens(response.accessToken, response.refreshToken);
+    }
+    if (response.user) {
+      setUser(response.user);
+    }
   }, []);
 
   const signOut = useCallback(async () => {
     try {
       await authApi.logout();
     } catch (error) {
-      if (!(error instanceof ApiError) || error.status !== 401) {
-        throw error;
+      if (!(error instanceof ApiError) || error.statusCode !== 401) {
+        // Ignore logout error
       }
     } finally {
       authStorage.clear();
@@ -114,27 +119,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    const mockUser: AuthUser = {
-      id: "usr_google_demo",
-      email: "pastor.daniel@churcheden.com",
-      fullName: "Pastor Daniel",
-      isVerified: true,
-      loginProvider: "google",
-      isPremium: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      memberships: [
-        {
-          id: "mem_super_demo",
-          role: "SUPER_ADMIN",
-          status: "APPROVED",
-          joinedAt: new Date().toISOString(),
-          church: { id: "ch_demo", name: "Redeemer's Chapel", logoUrl: null },
-        },
-      ],
-    };
-    authStorage.setTokens("mock_google_access_token", "mock_google_refresh_token");
-    setUser(mockUser);
+    try {
+      const response = await authApi.getGoogleAuthUrl();
+      if (response && response.url) {
+        window.location.href = response.url;
+      } else {
+        window.location.href = `${env.apiBaseUrl}/auth/google`;
+      }
+    } catch {
+      window.location.href = `${env.apiBaseUrl}/auth/google`;
+    }
   }, []);
 
   const verifyEmail = useCallback(
@@ -161,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       verifyEmail,
       resendVerification,
       setSessionFromTokens,
+      hydrateUser,
     }),
     [
       user,
@@ -172,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       verifyEmail,
       resendVerification,
       setSessionFromTokens,
+      hydrateUser,
     ],
   );
 
