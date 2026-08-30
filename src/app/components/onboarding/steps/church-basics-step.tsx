@@ -7,6 +7,7 @@ import { EdenButton } from "../eden-button";
 import { useOnboarding } from "../onboarding-context";
 import { churchBasicsSchema } from "../onboarding-schemas";
 import { saveStep1 } from "@/lib/onboarding-api";
+import { toast } from "sonner";
 import type { CongregationSize } from "@/types/api";
 import churchLeadership from "@/assets/onboarding/church-leadership.jpg";
 
@@ -79,11 +80,11 @@ export function ChurchBasicsStep() {
         congregationSize: sizeMap[result.data.churchSize] || "RANGE_1_100",
         foundedYear: result.data.foundedYear ? Number(result.data.foundedYear) : undefined,
       });
+      navigate("/onboarding/location-contact");
     } catch (error) {
-      // Non-fatal: continue navigation even if save fails
-      console.error("Failed to save step 1:", error);
+      // Show error and stay on this step if save fails
+      toast.error("Failed to save church basics. Please try again.");
     }
-    navigate("/onboarding/location-contact");
   };
 
   return (
