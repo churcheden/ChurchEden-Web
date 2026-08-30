@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { ShieldCheck } from "lucide-react";
-import { ApiError } from "@/lib/api-client";
+import { ApiError } from "@/lib/apiClient";
 import { resetPassword } from "@/lib/auth-api";
 import { OnboardingSplitShell } from "../onboarding/onboarding-split-shell";
 import { EdenPasswordInput } from "../onboarding/eden-password-input";

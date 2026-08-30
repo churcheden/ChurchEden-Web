@@ -1,5 +1,10 @@
+// src/hooks/useReactQuery.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/apiClient";
+import { queryKeys } from "@/lib/queryKeys";
+import { authService } from "@/lib/auth-api";
+import { onboardingService, type ServiceTimeInput } from "@/lib/onboarding-api";
+import { membersService } from "@/lib/profile-api";
 import type {
   User,
   MemberProfile,
@@ -8,163 +13,82 @@ import type {
   CongregationSize,
   ChurchLanguage,
   MembershipStatus,
+  CustomMinistry,
 } from "@/types/api";
-import { env } from "@/env";
 
-export function useAuthQuery() {
+// ---------------- AUTH HOOKS ----------------
+
+export function useMe() {
   return useQuery<User, Error>({
-    queryKey: ["/auth/me"],
+    queryKey: queryKeys.user(),
     queryFn: async () => {
-      const res = await apiClient.get<User>("/auth/me", { auth: true });
-      return res;
+      const res = await authService.me();
+      return (res as any).user || (res as any).data?.user || res;
     },
-    staleTime: 60_000,
+    staleTime: 5 * 60 * 1000,
     retry: false,
   });
 }
 
-export function useOnboardingDraftQuery() {
+// Backward-compatible alias
+export const useAuthQuery = useMe;
+
+export function useLogin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: authService.login,
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.user() }),
+  });
+}
+
+export function useLogout() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: authService.logout,
+    onSuccess: () => qc.clear(),
+  });
+}
+
+export const useRegister = () => useMutation({ mutationFn: authService.register });
+export const useVerifyEmail = () => useMutation({ mutationFn: authService.verifyEmail });
+export const useResendVerification = () => useMutation({ mutationFn: authService.resendVerification });
+export const useForgotPassword = () => useMutation({ mutationFn: authService.forgotPassword });
+export const useResetPassword = () => useMutation({ mutationFn: authService.resetPassword });
+
+// ---------------- ONBOARDING HOOKS ----------------
+
+export function useOnboardingDraft() {
   return useQuery<ChurchOnboardingDraft | null, Error>({
-    queryKey: ["/onboarding/church/draft"],
-    queryFn: async () => {
-      const res = await apiClient.get<ChurchOnboardingDraft>("/onboarding/church/draft");
-      return res;
-    },
+    queryKey: queryKeys.onboardingDraft(),
+    queryFn: onboardingService.getDraft,
     staleTime: 60_000,
     retry: false,
   });
 }
 
-export function useMemberProfileQuery() {
-  return useQuery<MemberProfile | null, Error>({
-    queryKey: ["/members/profile"],
-    queryFn: async () => {
-      const res = await apiClient.get<MemberProfile>("/members/profile");
-      return res;
-    },
-    staleTime: 60_000,
-    retry: false,
-  });
-}
+export const useOnboardingDraftQuery = useOnboardingDraft;
 
-export function useJoinRequestsQuery(filters?: { status?: MembershipStatus; churchId?: string }) {
-  return useQuery<ChurchMembership[], Error>({
-    queryKey: ["/join-requests", filters],
-    queryFn: async () => {
-      const res = await apiClient.get<ChurchMembership[]>("/join-requests", { params: filters });
-      return res;
-    },
-    staleTime: 60_000,
-    retry: false,
-  });
-}
-
-export function useBanMutation() {
-  const queryClient = useQueryClient();
-
+export function useOnboardingStep1() {
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (vars: { membershipId: string; banReason?: string }) => {
-      const res = await apiClient.post<{ status: string; message: string; membership: ChurchMembership }>("/join-requests/ban", {
-        membershipId: vars.membershipId,
-        banReason: vars.banReason,
-      });
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/join-requests"] });
-    },
-  });
-}
-
-export function useUnbanMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (vars: { membershipId: string }) => {
-      const res = await apiClient.post<{ status: string; message: string; membership: ChurchMembership }>("/join-requests/unban", {
-        membershipId: vars.membershipId,
-      });
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/join-requests"] });
-    },
-  });
-}
-
-export function useApproveMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (vars: { membershipId: string }) => {
-      const res = await apiClient.post<{ status: string; message: string }>("/join-requests/approve", {
-        membershipId: vars.membershipId,
-      });
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/join-requests"] });
-    },
-  });
-}
-
-export function useRejectMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (vars: { membershipId: string; rejectionReason?: string }) => {
-      const res = await apiClient.post<{ status: string; message: string }>("/join-requests/reject", {
-        membershipId: vars.membershipId,
-        rejectionReason: vars.rejectionReason,
-      });
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/join-requests"] });
-    },
-  });
-}
-
-export function useCompleteOnboardingMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      const res = await apiClient.post<{ status: string; message: string }>("/onboarding/church/complete");
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/onboarding/church/draft"] });
-    },
-  });
-}
-
-export function useSaveStep1Mutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (payload: {
+    mutationFn: (payload: {
       firstName: string;
       lastName: string;
       churchName: string;
       denomination: string;
       congregationSize: CongregationSize;
       foundedYear?: number;
-    }) => {
-      const res = await apiClient.patch<{ status: string }>("/onboarding/church/step-1", payload);
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/onboarding/church/draft"] });
-    },
+    }) => onboardingService.step1(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.onboardingDraft() }),
   });
 }
 
-export function useSaveStep2Mutation() {
-  const queryClient = useQueryClient();
+export const useSaveStep1Mutation = useOnboardingStep1;
 
+export function useOnboardingStep2() {
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: {
+    mutationFn: (payload: {
       country: string;
       city: string;
       address: string;
@@ -172,58 +96,136 @@ export function useSaveStep2Mutation() {
       email: string;
       primaryLanguage: ChurchLanguage;
       timeZone: string;
-    }) => {
-      const res = await apiClient.patch<{ status: string }>("/onboarding/church/step-2", payload);
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/onboarding/church/draft"] });
-    },
+    }) => onboardingService.step2(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.onboardingDraft() }),
   });
 }
 
-export function useSaveStep3Mutation() {
-  const queryClient = useQueryClient();
+export const useSaveStep2Mutation = useOnboardingStep2;
 
+export function useOnboardingStep3() {
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: {
-      serviceTimes: { label: string; dayOfWeek: number; time: string }[];
+    mutationFn: (payload: {
+      serviceTimes: ServiceTimeInput[];
       logoFile?: File | null;
-    }) => {
-      const formData = new FormData();
-      formData.append("serviceTimes", JSON.stringify(payload.serviceTimes));
-      if (payload.logoFile) {
-        formData.append("logo", payload.logoFile);
-      }
-      const res = await apiClient.patch<{ status: string }>("/onboarding/church/step-3", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      return res;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/onboarding/church/draft"] });
-    },
+    }) => onboardingService.step3(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.onboardingDraft() }),
   });
 }
 
-export function useSaveStep4Mutation() {
-  const queryClient = useQueryClient();
+export const useSaveStep3Mutation = useOnboardingStep3;
 
+export function useOnboardingStep4() {
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: {
+    mutationFn: (payload: {
       ministryIds: string[];
-      customMinistries: {
-        name: string;
-        type: "MINISTRY" | "DEPARTMENT";
-        description?: string;
-        icon?: string;
-      }[];
-    }) => {
-      const res = await apiClient.patch<{ status: string }>("/onboarding/church/step-4", payload);
-      return res;
-    },
+      customMinistries: CustomMinistry[];
+    }) => onboardingService.step4(payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.onboardingDraft() }),
+  });
+}
+
+export const useSaveStep4Mutation = useOnboardingStep4;
+
+export function useCompleteOnboarding() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: onboardingService.complete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/onboarding/church/draft"] });
+      qc.invalidateQueries({ queryKey: queryKeys.user() });
+      qc.removeQueries({ queryKey: queryKeys.onboardingDraft() });
     },
   });
 }
+
+export const useCompleteOnboardingMutation = useCompleteOnboarding;
+
+// ---------------- MEMBER PROFILE HOOKS ----------------
+
+export function useMemberProfile() {
+  return useQuery<MemberProfile | null, Error>({
+    queryKey: queryKeys.memberProfile(),
+    queryFn: membersService.getProfile,
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
+export const useMemberProfileQuery = useMemberProfile;
+
+export function useCompleteProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ photo, fields }: { photo: File | null; fields: any }) =>
+      membersService.completeProfile(photo, fields),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.memberProfile() }),
+  });
+}
+
+// ---------------- JOIN REQUEST HOOKS ----------------
+
+export function useJoinRequests(filters?: { status?: MembershipStatus; churchId?: string }) {
+  return useQuery<ChurchMembership[], Error>({
+    queryKey: queryKeys.joinRequests(filters),
+    queryFn: async () => {
+      const res = await membersService.getJoinRequests(filters);
+      return res || [];
+    },
+    staleTime: 60_000,
+    retry: false,
+  });
+}
+
+export const useJoinRequestsQuery = useJoinRequests;
+
+export function useSubmitJoinRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (churchId: string) => membersService.submitJoinRequest(churchId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.joinRequests() }),
+  });
+}
+
+export function useApproveJoinRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { membershipId: string }) => membersService.approveJoinRequest(vars.membershipId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.joinRequests() }),
+  });
+}
+
+export const useApproveMutation = useApproveJoinRequest;
+
+export function useRejectJoinRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { membershipId: string; rejectionReason?: string }) =>
+      membersService.rejectJoinRequest(vars.membershipId, vars.rejectionReason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.joinRequests() }),
+  });
+}
+
+export const useRejectMutation = useRejectJoinRequest;
+
+export function useBanMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { membershipId: string; banReason?: string }) =>
+      membersService.banMember(vars.membershipId, vars.banReason),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.joinRequests() }),
+  });
+}
+
+export const useBanMutation = useBanMember;
+
+export function useUnbanMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { membershipId: string }) => membersService.unbanMember(vars.membershipId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.joinRequests() }),
+  });
+}
+
+export const useUnbanMutation = useUnbanMember;

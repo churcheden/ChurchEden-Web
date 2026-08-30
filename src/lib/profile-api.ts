@@ -1,3 +1,4 @@
+// src/lib/profile-api.ts
 import { apiClient } from "@/lib/apiClient";
 import type { MemberProfile, ChurchMembership, Gender, MaritalStatus, MembershipStatus } from "@/types/api";
 
@@ -30,7 +31,7 @@ export async function completeMemberProfile(input: CompleteProfileInput): Promis
   if (input.profilePhoto) {
     formData.append("profilePhoto", input.profilePhoto);
   }
-  return apiClient.post<MemberProfile>("/members/profile/complete", formData);
+  return apiClient.postForm<MemberProfile>("/members/profile/complete", formData);
 }
 
 export async function getMemberProfile(): Promise<MemberProfile | null> {
@@ -59,3 +60,28 @@ export async function rejectJoinRequest(membershipId: string, rejectionReason?: 
     rejectionReason,
   });
 }
+
+export async function banMember(membershipId: string, banReason?: string) {
+  return apiClient.post<{ status: string; message: string; membership: ChurchMembership }>("/join-requests/ban", {
+    membershipId,
+    banReason,
+  });
+}
+
+export async function unbanMember(membershipId: string) {
+  return apiClient.post<{ status: string; message: string; membership: ChurchMembership }>("/join-requests/unban", {
+    membershipId,
+  });
+}
+
+export const membersService = {
+  getProfile: getMemberProfile,
+  completeProfile: (photo: File | null, fields: Omit<CompleteProfileInput, 'profilePhoto'>) =>
+    completeMemberProfile({ ...fields, profilePhoto: photo }),
+  getJoinRequests,
+  submitJoinRequest,
+  approveJoinRequest,
+  rejectJoinRequest,
+  banMember,
+  unbanMember,
+};

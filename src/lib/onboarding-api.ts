@@ -1,5 +1,6 @@
+// src/lib/onboarding-api.ts
 import { apiClient } from "@/lib/apiClient";
-import type { ChurchOnboardingDraft, CongregationSize, ChurchLanguage } from "@/types/api";
+import type { ChurchOnboardingDraft, CongregationSize, ChurchLanguage, CustomMinistry } from "@/types/api";
 
 export interface Step1Payload {
   firstName: string;
@@ -26,16 +27,9 @@ export interface ServiceTimeInput {
   time: string;
 }
 
-export interface CustomMinistryInput {
-  name: string;
-  type: "MINISTRY" | "DEPARTMENT";
-  description?: string;
-  icon?: string;
-}
-
 export interface Step4Payload {
   ministryIds: string[];
-  customMinistries: CustomMinistryInput[];
+  customMinistries: CustomMinistry[];
 }
 
 export async function saveStep1(payload: Step1Payload) {
@@ -52,7 +46,7 @@ export async function saveStep3(serviceTimes: ServiceTimeInput[], logoFile?: Fil
   if (logoFile) {
     formData.append("logo", logoFile);
   }
-  return apiClient.patch<{ status: string }>("/onboarding/church/step-3", formData);
+  return apiClient.patchForm<{ status: string }>("/onboarding/church/step-3", formData);
 }
 
 export async function saveStep4(payload: Step4Payload) {
@@ -68,5 +62,15 @@ export async function getDraft(): Promise<ChurchOnboardingDraft | null> {
 }
 
 export async function completeOnboarding() {
-  return apiClient.post<{ status: string; message: string }>("/onboarding/church/complete");
+  return apiClient.post<{ status: string; message: string; data?: { churchId: string } }>("/onboarding/church/complete");
 }
+
+export const onboardingService = {
+  step1: saveStep1,
+  step2: saveStep2,
+  step3: ({ serviceTimes, logoFile }: { serviceTimes: ServiceTimeInput[]; logoFile?: File | null }) =>
+    saveStep3(serviceTimes, logoFile),
+  step4: saveStep4,
+  getDraft,
+  complete: completeOnboarding,
+};

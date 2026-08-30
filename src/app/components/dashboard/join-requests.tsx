@@ -10,7 +10,7 @@ import {
   X,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
-import { ApiError, apiRequest } from "@/lib/api-client";
+import { ApiError, apiClient, apiRequest } from "@/lib/apiClient";
 import { FormDialog } from "./form-dialog";
 
 // ─── Design tokens (match dashboard pages) ───────────────────────────────────
@@ -265,7 +265,7 @@ export function JoinRequestsPage() {
       await apiRequest<MessageResponse>("/join-requests/ban", {
         method: "POST",
         auth: true,
-        body: { membershipId: request.id, banReason: undefined },
+        body: { membershipId: request.id, banReason: "Banned by administrator." },
       });
       toast.success("User banned from this church");
       await load();

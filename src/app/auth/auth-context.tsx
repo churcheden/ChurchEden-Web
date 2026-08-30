@@ -7,9 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ApiError } from "@/lib/apiClient";
 import * as authApi from "@/lib/auth-api";
-import { authStorage } from "@/lib/auth-storage";
 import { env } from "@/env";
 import type { AuthUser } from "@/types/auth";
 
@@ -23,7 +21,7 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>;
   verifyEmail: (email: string, otp: string) => Promise<void>;
   resendVerification: () => Promise<void>;
-  setSessionFromTokens: (accessToken: string, refreshToken?: string) => Promise<void>;
+  setSessionFromTokens: (accessToken?: string, refreshToken?: string) => Promise<void>;
   hydrateUser: () => Promise<boolean>;
 }
 
@@ -40,25 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(response.user);
         return true;
       }
+      setUser(null);
       return false;
-    } catch (error) {
-      if (
-        error instanceof ApiError &&
-        error.statusCode === 401 &&
-        authStorage.getRefreshToken()
-      ) {
-        try {
-          await authApi.refreshTokens();
-          const retryResponse = await authApi.getCurrentUser();
-          if (retryResponse && retryResponse.user) {
-            setUser(retryResponse.user);
-            return true;
-          }
-        } catch {
-          setUser(null);
-          return false;
-        }
-      }
+    } catch {
       setUser(null);
       return false;
     }
@@ -73,12 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [hydrateUser]);
 
   const setSessionFromTokens = useCallback(
-    async (accessToken: string, refreshToken?: string) => {
-      if (refreshToken) {
-        authStorage.setTokens(accessToken, refreshToken);
-      } else {
-        authStorage.setAccessToken(accessToken);
-      }
+    async (_accessToken?: string, _refreshToken?: string) => {
       await hydrateUser();
     },
     [hydrateUser],
@@ -86,9 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string) => {
     const response = await authApi.register(email, password);
-    if (response.accessToken) {
-      authStorage.setTokens(response.accessToken, response.refreshToken);
-    }
     if (response.user) {
       setUser(response.user);
     }
@@ -97,9 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (email: string, password: string) => {
     const response = await authApi.login(email, password);
-    if (response.accessToken) {
-      authStorage.setTokens(response.accessToken, response.refreshToken);
-    }
     if (response.user) {
       setUser(response.user);
     }
@@ -108,12 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = useCallback(async () => {
     try {
       await authApi.logout();
-    } catch (error) {
-      if (!(error instanceof ApiError) || error.statusCode !== 401) {
-        // Ignore logout error
-      }
+    } catch {
+      // Ignore logout error
     } finally {
-      authStorage.clear();
       setUser(null);
     }
   }, []);

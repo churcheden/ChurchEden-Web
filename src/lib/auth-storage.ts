@@ -1,34 +1,25 @@
-const ACCESS_KEY = "ce_access_token";
-const REFRESH_KEY = "ce_refresh_token";
-
-let accessTokenMem: string | null = null;
-let refreshTokenMem: string | null = null;
+// src/lib/auth-storage.ts
+// On web, authentication is managed via HttpOnly cookies by the browser.
+// This module provides a no-op / compatibility interface so existing references do not break.
 
 export const authStorage = {
   getAccessToken(): string | null {
-    return accessTokenMem ?? sessionStorage.getItem(ACCESS_KEY);
+    return null;
   },
 
   getRefreshToken(): string | null {
-    return refreshTokenMem ?? sessionStorage.getItem(REFRESH_KEY);
+    return null;
   },
 
-  setTokens(access: string, refresh: string) {
-    accessTokenMem = access;
-    refreshTokenMem = refresh;
-    sessionStorage.setItem(ACCESS_KEY, access);
-    sessionStorage.setItem(REFRESH_KEY, refresh);
+  setTokens(_access: string, _refresh?: string) {
+    // No-op on web: HttpOnly cookies carry tokens
   },
 
-  setAccessToken(access: string) {
-    accessTokenMem = access;
-    sessionStorage.setItem(ACCESS_KEY, access);
+  setAccessToken(_access: string) {
+    // No-op on web: HttpOnly cookies carry tokens
   },
 
   clear() {
-    accessTokenMem = null;
-    refreshTokenMem = null;
-    sessionStorage.removeItem(ACCESS_KEY);
-    sessionStorage.removeItem(REFRESH_KEY);
+    // No-op on web
   },
 };

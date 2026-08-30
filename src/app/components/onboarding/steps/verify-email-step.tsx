@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import { Mail, ShieldCheck } from "lucide-react";
-import { ApiError } from "@/lib/api-client";
+import { ApiError } from "@/lib/apiClient";
 import { useAuth } from "@/app/auth/auth-context";
 import { useOnboarding } from "../onboarding-context";
 import { OnboardingSplitShell } from "../onboarding-split-shell";

@@ -1,5 +1,5 @@
-import { apiRequest } from "@/lib/api-client";
-import { authStorage } from "@/lib/auth-storage";
+// src/lib/auth-api.ts
+import { apiClient } from "@/lib/apiClient";
 import type {
   GoogleAuthUrlResponse,
   LoginResponse,
@@ -10,68 +10,70 @@ import type {
 } from "@/types/auth";
 
 export function register(email: string, password: string) {
-  return apiRequest<RegisterResponse>("/auth/register", {
-    method: "POST",
-    body: { email, password },
+  return apiClient.post<RegisterResponse>("/auth/register", {
+    email,
+    password,
   });
 }
 
 export function login(email: string, password: string) {
-  return apiRequest<LoginResponse>("/auth/login", {
-    method: "POST",
-    body: { email, password },
+  return apiClient.post<LoginResponse>("/auth/login", {
+    email,
+    password,
   });
 }
 
 export function verifyEmail(email: string, otp: string) {
-  return apiRequest<MessageResponse>("/auth/verify-email", {
-    method: "POST",
-    body: { email, otp },
+  return apiClient.post<MessageResponse>("/auth/verify-email", {
+    email,
+    otp,
   });
 }
 
-export function resendVerification() {
-  return apiRequest<MessageResponse>("/auth/resend-verification", {
-    method: "POST",
-    auth: true,
+export function resendVerification(email?: string) {
+  return apiClient.post<MessageResponse>("/auth/resend-verification", {
+    ...(email ? { email } : {}),
   });
 }
 
 export function getCurrentUser() {
-  return apiRequest<MeResponse>("/auth/me", { auth: true });
+  return apiClient.get<MeResponse>("/auth/me");
 }
 
-export async function refreshTokens() {
-  const refreshToken = authStorage.getRefreshToken();
-  const response = await apiRequest<RefreshResponse>("/auth/refresh", {
-    method: "POST",
-    body: refreshToken ? { refreshToken } : {},
-  });
-  authStorage.setTokens(response.data.newAccessToken, response.data.newRefreshToken);
-  return response;
+export function refreshTokens() {
+  return apiClient.post<RefreshResponse>("/auth/refresh");
 }
 
 export function logout() {
-  return apiRequest<MessageResponse>("/auth/logout", {
-    method: "POST",
-    auth: true,
-  });
+  return apiClient.post<MessageResponse>("/auth/logout");
 }
 
 export function forgotPassword(email: string) {
-  return apiRequest<MessageResponse>("/auth/forgot-password", {
-    method: "POST",
-    body: { email },
+  return apiClient.post<MessageResponse>("/auth/forgot-password", {
+    email,
   });
 }
 
 export function resetPassword(token: string, newPassword: string) {
-  return apiRequest<MessageResponse>("/auth/reset-password", {
-    method: "POST",
-    body: { token, newPassword },
+  return apiClient.post<MessageResponse>("/auth/reset-password", {
+    token,
+    newPassword,
   });
 }
 
 export function getGoogleAuthUrl() {
-  return apiRequest<GoogleAuthUrlResponse>("/auth/google/url");
+  return apiClient.get<GoogleAuthUrlResponse>("/auth/google/url");
 }
+
+export const authService = {
+  register: (vars: { email: string; password: string }) => register(vars.email, vars.password),
+  login: (vars: { email: string; password: string }) => login(vars.email, vars.password),
+  verifyEmail: (vars: { email: string; otp: string }) => verifyEmail(vars.email, vars.otp),
+  resendVerification: (vars?: { email?: string }) => resendVerification(vars?.email),
+  me: getCurrentUser,
+  refresh: refreshTokens,
+  logout,
+  forgotPassword: (vars: { email: string }) => forgotPassword(vars.email),
+  resetPassword: (vars: { token: string; newPassword: string }) => resetPassword(vars.token, vars.newPassword),
+  getGoogleAuthUrl,
+};
