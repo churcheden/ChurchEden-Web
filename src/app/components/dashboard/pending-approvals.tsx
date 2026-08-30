@@ -10,7 +10,7 @@ const initialMembers = [
   { id: 5, name: "Nii Armah", initials: "NA", date: "May 29", branch: "South Campus", color: "#2D1B69" },
 ];
 
-export function PendingApprovals() {
+export function PendingApprovals({ onViewAll }: { onViewAll?: () => void }) {
   const [members, setMembers] = useState(initialMembers);
   const [approved, setApproved] = useState<number[]>([]);
 
@@ -49,7 +49,7 @@ export function PendingApprovals() {
       {/* Members */}
       <div className="space-y-2">
         <AnimatePresence>
-          {members.map((member, i) => (
+          {members.map((member, _i) => (
             <motion.div
               key={member.id}
               initial={{ opacity: 0, height: 0 }}
@@ -125,6 +125,7 @@ export function PendingApprovals() {
 
       {members.length > 0 && (
         <button
+          onClick={onViewAll}
           className="w-full mt-4 pt-3 text-center"
           style={{ borderTop: "1px solid #EEEEEE", fontSize: "12px", color: "#C8860A", fontFamily: "var(--font-label)", fontWeight: 500 }}
         >

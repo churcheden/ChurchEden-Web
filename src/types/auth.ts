@@ -1,3 +1,18 @@
+export type MembershipRole = "MEMBER" | "ADMIN" | "SUPER_ADMIN";
+export type MembershipStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface ChurchMembership {
+  id: string;
+  role: MembershipRole;
+  status: MembershipStatus;
+  joinedAt: string;
+  church: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+  };
+}
+
 export interface AuthUser {
   id: string;
   email: string;
@@ -9,6 +24,7 @@ export interface AuthUser {
   lastLogin?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  memberships?: ChurchMembership[];
 }
 
 export interface ApiErrorResponse {

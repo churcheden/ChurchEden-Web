@@ -22,6 +22,7 @@ import { QRAttendancePage } from "./qr-attendance";
 import { AttendanceHistoryPage } from "./attendance-history";
 import { ChurchSettingsPage } from "./church-settings";
 import { AdminManagementPage } from "./admin-management";
+import { JoinRequestsPage } from "./join-requests";
 
 type Page = "Overview" | "Members" | string;
 
@@ -33,7 +34,7 @@ function readPersistedPage(): Page {
   return "Overview";
 }
 
-function OverviewContent() {
+function OverviewContent({ onViewAllPending }: { onViewAllPending: () => void }) {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="p-4 lg:p-6 max-w-screen-2xl mx-auto">
@@ -45,7 +46,7 @@ function OverviewContent() {
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-5 mt-4 lg:mt-5">
           <div className="xl:col-span-2"><RecentGiving /></div>
-          <div><PendingApprovals /></div>
+          <div><PendingApprovals onViewAll={onViewAllPending} /></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5 mt-4 lg:mt-5 pb-6">
           <UpcomingEvents />
@@ -82,6 +83,7 @@ export function Dashboard() {
   const pageTitle: Record<string, string> = {
     Overview: "Church Overview",
     Members: "Members",
+    "Join Requests": "Join Requests",
     Events: "Events",
     Announcements: "Announcements",
     "Tithes & Offerings": "Tithes & Offerings",
@@ -109,11 +111,17 @@ export function Dashboard() {
           breadcrumb={currentPage !== "Overview" ? currentPage : undefined}
         />
 
-        {currentPage === "Overview" && <OverviewContent />}
+        {currentPage === "Overview" && <OverviewContent onViewAllPending={() => setCurrentPage("Join Requests")} />}
 
         {currentPage === "Members" && (
           <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F5F4EF" }}>
             <MembersPage />
+          </div>
+        )}
+
+        {currentPage === "Join Requests" && (
+          <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F5F4EF" }}>
+            <JoinRequestsPage />
           </div>
         )}
 
@@ -171,7 +179,7 @@ export function Dashboard() {
           </div>
         )}
 
-        {currentPage !== "Overview" && currentPage !== "Members" && currentPage !== "Events" && currentPage !== "Announcements" && currentPage !== "Tithes & Offerings" && currentPage !== "Transactions" && currentPage !== "Financial Reports" && currentPage !== "QR Attendance" && currentPage !== "Attendance History" && currentPage !== "Church Settings" && currentPage !== "Admin Management" && (
+        {currentPage !== "Overview" && currentPage !== "Members" && currentPage !== "Join Requests" && currentPage !== "Events" && currentPage !== "Announcements" && currentPage !== "Tithes & Offerings" && currentPage !== "Transactions" && currentPage !== "Financial Reports" && currentPage !== "QR Attendance" && currentPage !== "Attendance History" && currentPage !== "Church Settings" && currentPage !== "Admin Management" && (
           <main className="flex-1 overflow-y-auto flex items-center justify-center" style={{ background: "#F5F4EF" }}>
             <div className="text-center">
               <div

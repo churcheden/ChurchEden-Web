@@ -123,6 +123,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isPremium: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      memberships: [
+        {
+          id: "mem_super_demo",
+          role: "SUPER_ADMIN",
+          status: "APPROVED",
+          joinedAt: new Date().toISOString(),
+          church: { id: "ch_demo", name: "Redeemer's Chapel", logoUrl: null },
+        },
+      ],
     };
     authStorage.setTokens("mock_google_access_token", "mock_google_refresh_token");
     setUser(mockUser);

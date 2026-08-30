@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   Home, Users, Calendar, Megaphone,
   DollarSign, BarChart2, Receipt,
   QrCode, ClipboardList, Settings,
-  UserCog, X, LogOut, Crown, ArrowRight,
+  UserCheck, UserCog, X, LogOut, Crown, ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-context";
+import { isChurchAdmin } from "@/lib/memberships";
 import justLogoTransparent from "@/assets/Just-logo-transparent.png";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -20,50 +21,6 @@ const TEXT_ACTIVE    = "#FFFFFF";
 const AMBER          = "#C8860A";
 const AMBER_LIGHT    = "#F59E0B";
 
-interface NavItem {
-  icon: React.ElementType;
-  label: string;
-}
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
-
-const navSections: NavSection[] = [
-  {
-    title: "MAIN",
-    items: [
-      { icon: Home, label: "Overview" },
-      { icon: Users, label: "Members" },
-      { icon: Calendar, label: "Events" },
-      { icon: Megaphone, label: "Announcements" },
-    ],
-  },
-  {
-    title: "FINANCE",
-    items: [
-      { icon: DollarSign, label: "Tithes & Offerings" },
-      { icon: BarChart2, label: "Financial Reports" },
-      { icon: Receipt, label: "Transactions" },
-    ],
-  },
-  {
-    title: "ATTENDANCE",
-    items: [
-      { icon: QrCode, label: "QR Attendance" },
-      { icon: ClipboardList, label: "Attendance History" },
-    ],
-  },
-  {
-    title: "SETTINGS",
-    items: [
-      { icon: Settings, label: "Church Settings" },
-      { icon: UserCog, label: "Admin Management" },
-    ],
-  },
-];
-
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -73,10 +30,48 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProps) {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [internalActive, setInternalActive] = useState("Overview");
   const [isSigningOut, setIsSigningOut] = useState(false);
   const activeItem = activePage ?? internalActive;
+
+  const navSections = useMemo(() => {
+    const isAdmin = isChurchAdmin(user?.memberships);
+    return [
+      {
+        title: "MAIN",
+        items: [
+          { icon: Home, label: "Overview" },
+          { icon: Users, label: "Members" },
+          ...(isAdmin ? [{ icon: UserCheck, label: "Join Requests" }] : []),
+          { icon: Calendar, label: "Events" },
+          { icon: Megaphone, label: "Announcements" },
+        ],
+      },
+      {
+        title: "FINANCE",
+        items: [
+          { icon: DollarSign, label: "Tithes & Offerings" },
+          { icon: BarChart2, label: "Financial Reports" },
+          { icon: Receipt, label: "Transactions" },
+        ],
+      },
+      {
+        title: "ATTENDANCE",
+        items: [
+          { icon: QrCode, label: "QR Attendance" },
+          { icon: ClipboardList, label: "Attendance History" },
+        ],
+      },
+      {
+        title: "SETTINGS",
+        items: [
+          { icon: Settings, label: "Church Settings" },
+          { icon: UserCog, label: "Admin Management" },
+        ],
+      },
+    ];
+  }, [user?.memberships]);
 
   const handleNav = (label: string) => {
     setInternalActive(label);
