@@ -34,6 +34,8 @@ export interface OnboardingData {
   password: string;
 
   // Step 1: Church Basics
+  firstName: string;
+  lastName: string;
   churchName: string;
   denomination: string;
   churchSize: string;
@@ -63,6 +65,8 @@ const DEFAULT_ONBOARDING_DATA: OnboardingData = {
   password: "",
 
   // Step 1: Church Basics
+  firstName: "",
+  lastName: "",
   churchName: "",
   denomination: "",
   churchSize: "",

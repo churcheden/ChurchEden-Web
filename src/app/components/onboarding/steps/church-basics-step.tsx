@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
-import { ArrowRight, ArrowLeft, Tag, Users, Calendar, Church } from "lucide-react";
+import { ArrowRight, ArrowLeft, Tag, Users, Calendar, Church, UserRound } from "lucide-react";
 import { OnboardingLayout } from "../onboarding-layout";
 import { EdenField, EdenSelect } from "../eden-field";
 import { EdenButton } from "../eden-button";
@@ -33,6 +33,8 @@ export function ChurchBasicsStep() {
   const { data, updateData } = useOnboarding();
 
   const [form, setForm] = useState({
+    firstName: data.firstName,
+    lastName: data.lastName,
     churchName: data.churchName,
     denomination: data.denomination,
     churchSize: data.churchSize,
@@ -97,6 +99,36 @@ export function ChurchBasicsStep() {
       }
     >
       <form id="church-basics-form" onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <EdenField
+            id="first-name"
+            label="First Name"
+            placeholder="Enter first name"
+            icon={<UserRound size={18} />}
+            value={form.firstName}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, firstName: e.target.value }));
+              if (errors.firstName) setErrors((prev) => ({ ...prev, firstName: "" }));
+            }}
+            error={errors.firstName}
+            required
+          />
+
+          <EdenField
+            id="last-name"
+            label="Last Name"
+            placeholder="Enter last name"
+            icon={<UserRound size={18} />}
+            value={form.lastName}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, lastName: e.target.value }));
+              if (errors.lastName) setErrors((prev) => ({ ...prev, lastName: "" }));
+            }}
+            error={errors.lastName}
+            required
+          />
+        </div>
+
         <EdenField
           id="church-name"
           label="Church Name"
