@@ -21,10 +21,10 @@ const DENOMINATION_OPTIONS = [
 ];
 
 const CHURCH_SIZE_OPTIONS = [
-  { value: "1–50", label: "1–50 members" },
-  { value: "51–200", label: "51–200 members" },
-  { value: "201–500", label: "201–500 members" },
-  { value: "501–2,000", label: "501–2,000 members" },
+  { value: "1–100", label: "1–100 members" },
+  { value: "101–500", label: "101–500 members" },
+  { value: "501–1,000", label: "501–1,000 members" },
+  { value: "1,001–2,000", label: "1,001–2,000 members" },
   { value: "2,000+", label: "2,000+ members" },
 ];
 
@@ -161,7 +161,7 @@ export function ChurchBasicsStep() {
 
           <EdenSelect
             id="church-size"
-            label="Estimated Church Size"
+            label="Congregation size"
             placeholderOption="Select size range"
             icon={<Users size={18} />}
             options={CHURCH_SIZE_OPTIONS}

@@ -103,7 +103,7 @@ export function SetupCompleteStep() {
             <div className="flex items-center gap-3 text-xs text-slate-500 pt-1 border-t border-slate-200/60">
               <span className="flex items-center gap-1">
                 <Users size={13} className="text-slate-400" />
-                {data.churchSize || "51–200 members"}
+                {data.churchSize || "1–100 members"}
               </span>
               <span>•</span>
               <span className="truncate">{data.denomination || "Charismatic"}</span>

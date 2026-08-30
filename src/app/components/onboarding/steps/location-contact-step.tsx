@@ -44,13 +44,7 @@ const TIMEZONES = [
 const LANGUAGES = [
   { value: "English", label: "English" },
   { value: "French", label: "French (Français)" },
-  { value: "Twi", label: "Twi (Akan)" },
-  { value: "Yoruba", label: "Yorùbá" },
-  { value: "Igbo", label: "Igbo" },
-  { value: "Hausa", label: "Hausa" },
-  { value: "Swahili", label: "Kiswahili" },
   { value: "Spanish", label: "Spanish (Español)" },
-  { value: "Portuguese", label: "Portuguese (Português)" },
 ];
 
 export function LocationContactStep() {
