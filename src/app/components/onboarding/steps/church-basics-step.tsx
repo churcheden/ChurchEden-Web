@@ -6,6 +6,8 @@ import { EdenField, EdenSelect } from "../eden-field";
 import { EdenButton } from "../eden-button";
 import { useOnboarding } from "../onboarding-context";
 import { churchBasicsSchema } from "../onboarding-schemas";
+import { saveStep1 } from "@/lib/onboarding-api";
+import type { CongregationSize } from "@/types/api";
 import churchLeadership from "@/assets/onboarding/church-leadership.jpg";
 
 const DENOMINATION_OPTIONS = [
@@ -43,7 +45,7 @@ export function ChurchBasicsStep() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
 
@@ -61,6 +63,26 @@ export function ChurchBasicsStep() {
     }
 
     updateData(result.data);
+    try {
+      const sizeMap: Record<string, CongregationSize> = {
+        "1–100": "RANGE_1_100",
+        "101–500": "RANGE_101_500",
+        "501–1,000": "RANGE_501_1000",
+        "1,001–2,000": "RANGE_1001_2000",
+        "2,000+": "RANGE_2000_PLUS",
+      };
+      await saveStep1({
+        firstName: result.data.firstName,
+        lastName: result.data.lastName,
+        churchName: result.data.churchName,
+        denomination: result.data.denomination,
+        congregationSize: sizeMap[result.data.churchSize] || "RANGE_1_100",
+        foundedYear: result.data.foundedYear ? Number(result.data.foundedYear) : undefined,
+      });
+    } catch (error) {
+      // Non-fatal: continue navigation even if save fails
+      console.error("Failed to save step 1:", error);
+    }
     navigate("/onboarding/location-contact");
   };
 

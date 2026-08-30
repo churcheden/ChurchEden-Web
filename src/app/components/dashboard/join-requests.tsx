@@ -41,6 +41,7 @@ interface JoinRequest {
     phoneNumber: string;
     city: string;
   } | null;
+  isBanned?: boolean;
 }
 
 interface JoinRequestsResponse {
@@ -258,6 +259,40 @@ export function JoinRequestsPage() {
     }
   };
 
+  const handleBan = async (request: JoinRequest) => {
+    setActingId(request.id);
+    try {
+      await apiRequest<MessageResponse>("/join-requests/ban", {
+        method: "POST",
+        auth: true,
+        body: { membershipId: request.id, banReason: undefined },
+      });
+      toast.success("User banned from this church");
+      await load();
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not ban the user."));
+    } finally {
+      setActingId(null);
+    }
+  };
+
+  const handleUnban = async (request: JoinRequest) => {
+    setActingId(request.id);
+    try {
+      await apiRequest<MessageResponse>("/join-requests/unban", {
+        method: "POST",
+        auth: true,
+        body: { membershipId: request.id },
+      });
+      toast.success("User unbanned from this church");
+      await load();
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not unban the user."));
+    } finally {
+      setActingId(null);
+    }
+  };
+
   const memberName = (request: JoinRequest) =>
     request.user.fullName || request.memberProfile?.fullName || "Church member";
 
@@ -389,7 +424,7 @@ export function JoinRequestsPage() {
                             <>
                               <button
                                 type="button"
-                                onClick={() => void handleApprove(request)}
+                                onClick={() => void handleBan(request)}
                                 disabled={actingId !== null}
                                 className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-60 disabled:cursor-not-allowed"
                                 style={{
@@ -409,7 +444,7 @@ export function JoinRequestsPage() {
                                 ) : (
                                   <>
                                     <Check size={14} />
-                                    Approve
+                                    Ban
                                   </>
                                 )}
                               </button>
@@ -425,7 +460,19 @@ export function JoinRequestsPage() {
                               </button>
                             </>
                           )}
-                          {filter !== "PENDING" && <StatusPill status={request.status} />}
+                          {filter !== "PENDING" && request.isBanned && (
+                            <button
+                              type="button"
+                              onClick={() => void handleUnban(request)}
+                              disabled={actingId !== null}
+                              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl transition-all active:scale-[0.98] hover:bg-[#D0F0D0] disabled:opacity-60 disabled:cursor-not-allowed"
+                              style={{ border: `1px solid #33C933`, background: "#EFF7EF", fontSize: "12.5px", fontWeight: 600, color: "#33C933", fontFamily: FONT }}
+                            >
+                              <Check size={14} />
+                              Unban
+                            </button>
+                          )}
+                          {filter !== "PENDING" && !request.isBanned && <StatusPill status={request.status} />}
                         </div>
                       </div>
 

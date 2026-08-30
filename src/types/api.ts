@@ -94,6 +94,9 @@ export interface ChurchMembership {
   role: ChurchRole;
   status: MembershipStatus;
   rejectionReason?: string | null;
+  isBanned?: boolean;
+  bannedAt?: string | null;
+  banReason?: string | null;
   joinedAt: string;
   church?: Church;
   user?: User;
