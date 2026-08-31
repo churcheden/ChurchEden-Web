@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  Ban,
   CalendarDays,
   Check,
   MapPin,
@@ -196,6 +197,8 @@ export function JoinRequestsPage() {
   const [actingId, setActingId] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<JoinRequest | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [banTarget, setBanTarget] = useState<JoinRequest | null>(null);
+  const [banReason, setBanReason] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -259,15 +262,17 @@ export function JoinRequestsPage() {
     }
   };
 
-  const handleBan = async (request: JoinRequest) => {
+  const handleBan = async (request: JoinRequest, reason: string) => {
     setActingId(request.id);
     try {
       await apiRequest<MessageResponse>("/join-requests/ban", {
         method: "POST",
         auth: true,
-        body: { membershipId: request.id, banReason: "Banned by administrator." },
+        body: { membershipId: request.id, banReason: reason },
       });
       toast.success("User banned from this church");
+      setBanTarget(null);
+      setBanReason("");
       await load();
     } catch (error) {
       toast.error(errorMessage(error, "Could not ban the user."));
@@ -424,7 +429,7 @@ export function JoinRequestsPage() {
                             <>
                               <button
                                 type="button"
-                                onClick={() => void handleBan(request)}
+                                onClick={() => void handleApprove(request)}
                                 disabled={actingId !== null}
                                 className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl transition-all active:scale-[0.98] hover:opacity-95 disabled:opacity-60 disabled:cursor-not-allowed"
                                 style={{
@@ -444,9 +449,19 @@ export function JoinRequestsPage() {
                                 ) : (
                                   <>
                                     <Check size={14} />
-                                    Ban
+                                    Approve
                                   </>
                                 )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setBanTarget(request); setBanReason(""); }}
+                                disabled={actingId !== null}
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl transition-all active:scale-[0.98] hover:bg-[#FDF1F0] disabled:opacity-60 disabled:cursor-not-allowed"
+                                style={{ border: `1px solid ${BORDER}`, background: "#FFFFFF", fontSize: "12.5px", fontWeight: 600, color: "#B3261E", fontFamily: FONT }}
+                              >
+                                <Ban size={14} />
+                                Ban
                               </button>
                               <button
                                 type="button"
@@ -536,6 +551,53 @@ export function JoinRequestsPage() {
           />
           <div style={{ fontSize: "11px", color: MUTED, fontFamily: FONT, marginTop: "6px", textAlign: "right" }}>
             {rejectReason.length}/500
+          </div>
+        </div>
+      </FormDialog>
+
+      {/* Ban dialog */}
+      <FormDialog
+        open={banTarget !== null}
+        onClose={() => {
+          if (actingId !== null) return;
+          setBanTarget(null);
+          setBanReason("");
+        }}
+        icon={<Ban size={18} style={{ color: "#B3261E" }} />}
+        title={`Ban ${banTarget ? memberName(banTarget) : ""} from your church`}
+        description="Banned users can no longer join or request to join this church."
+        maxWidth="max-w-lg"
+        primaryButton={{
+          label: "Ban user",
+          onClick: () => { if (banTarget) void handleBan(banTarget, banReason.trim()); },
+          loading: banTarget !== null && actingId === banTarget.id,
+          loadingLabel: "Banning...",
+          disabled: !banReason.trim(),
+          danger: true,
+        }}
+      >
+        <div className="p-6">
+          <label style={{ fontSize: "12.5px", fontWeight: 600, color: INK, fontFamily: FONT }}>
+            Reason <span style={{ color: "#B3261E", fontWeight: 600 }}>*</span>
+          </label>
+          <textarea
+            value={banReason}
+            onChange={(e) => setBanReason(e.target.value)}
+            rows={3}
+            maxLength={500}
+            placeholder="e.g. Repeatedly submitted abusive requests."
+            className="w-full mt-2 outline-none resize-none rounded-xl px-4 py-3 transition-shadow"
+            style={{
+              background: "#FFFFFF",
+              border: `1px solid ${banReason.trim() ? BORDER : "#E5B8B4"}`,
+              fontSize: "13px", color: INK, fontFamily: FONT,
+              boxShadow: "none",
+            }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "#B3261E"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(179,38,30,0.12)"; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = banReason.trim() ? BORDER : "#E5B8B4"; e.currentTarget.style.boxShadow = "none"; }}
+          />
+          <div style={{ fontSize: "11px", color: MUTED, fontFamily: FONT, marginTop: "6px", textAlign: "right" }}>
+            {banReason.length}/500
           </div>
         </div>
       </FormDialog>

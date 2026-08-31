@@ -17,6 +17,8 @@ export interface FormDialogFooterButton {
   icon?: ReactNode;
   loading?: boolean;
   loadingLabel?: string;
+  disabled?: boolean;
+  danger?: boolean;
 }
 
 export function FormDialog({
@@ -128,11 +130,17 @@ export function FormDialog({
                 type={submitFormId ? "submit" : "button"}
                 onClick={submitFormId ? undefined : primaryButton.onClick}
                 form={submitFormId}
-                disabled={submitting}
+                disabled={submitting || primaryButton.disabled}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{
-                  background: submitting ? "rgba(200,134,10,0.7)" : `linear-gradient(135deg, ${DIALOG_GOLD} 0%, #D99A20 100%)`,
-                  boxShadow: `0 6px 16px rgba(200,134,10,0.28)`,
+                  background: submitting
+                    ? primaryButton.danger ? "rgba(179,38,30,0.7)" : "rgba(200,134,10,0.7)"
+                    : primaryButton.danger
+                      ? "linear-gradient(135deg, #B3261E 0%, #D43A2F 100%)"
+                      : `linear-gradient(135deg, ${DIALOG_GOLD} 0%, #D99A20 100%)`,
+                  boxShadow: primaryButton.danger
+                    ? "0 6px 16px rgba(179,38,30,0.22)"
+                    : `0 6px 16px rgba(200,134,10,0.28)`,
                   fontSize: "13.5px", fontWeight: 700, color: "#FFFFFF", fontFamily: DIALOG_FONT,
                 }}
               >

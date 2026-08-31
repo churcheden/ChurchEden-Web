@@ -18,6 +18,18 @@ export interface AuthUser {
   email: string;
   fullName?: string | null;
   isVerified: boolean;
+  // Admin-only fields (returned by /auth/me when accountType === "ADMIN")
+  accountType?: "ADMIN" | "MEMBER";
+  role?: "SUPER_ADMIN" | "ADMIN";
+  isActive?: boolean;
+  linkedUserId?: string | null;
+  church?: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+    city?: string | null;
+  } | null;
+  // Member-only fields
   loginProvider?: string;
   isPremium?: boolean;
   premiumExpiry?: string | null;
@@ -52,6 +64,8 @@ export interface LoginResponse {
 
 export interface MeResponse {
   status: "success";
+  accountType?: "ADMIN" | "MEMBER";
+  profileComplete?: boolean;
   user: AuthUser;
 }
 

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   UserPlus,
   Shield,
@@ -39,6 +39,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useAuth } from "@/app/auth/auth-context";
+import { getChurchAdmins, type AdminRow } from "@/lib/admin-api";
 
 const BRAND_GOLD = "#C8860A";
 const GOLD_LIGHT = "#E3B34D";
@@ -58,7 +60,7 @@ type RoleName =
   | string;
 
 interface Admin {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string;
@@ -85,6 +87,12 @@ const ROLE_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string;
     color: "#6D28D9",
     bg: "rgba(109, 40, 217, 0.08)",
     border: "rgba(109, 40, 217, 0.2)",
+  },
+  Administrator: {
+    icon: ShieldCheck,
+    color: "#78350F",
+    bg: "rgba(200, 134, 10, 0.12)",
+    border: "rgba(200, 134, 10, 0.3)",
   },
   "Finance Manager": {
     icon: Wallet,
@@ -126,6 +134,65 @@ const getRoleConfig = (role: string) =>
     border: "rgba(200, 134, 10, 0.2)",
   };
 
+// Map a backend Admin row into the display Admin shape used by this page.
+const ADMIN_COLORS = ["#78350F", "#6D28D9", "#047857", "#1D4ED8", "#0F766E", "#B45309"];
+const mapAdminRow = (row: AdminRow): Admin => {
+  const name = row.fullName || row.linkedUser?.fullName || row.email.split("@")[0];
+  const role = row.role === "SUPER_ADMIN" ? "Super Admin" : "Administrator";
+  const loggedInAt =
+    row.linkedUser?.lastLogin ?? row.createdAt ?? null;
+  const lastActive = loggedInAt ? formatRelativeTime(loggedInAt) : "Never logged in";
+  return {
+    id: row.id,
+    name,
+    email: row.email,
+    phone: "",
+    role,
+    status: row.isActive ? "Active" : "Inactive",
+    lastActive,
+    memberSince: row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "—",
+    initials: getInitials(name),
+    color: ADMIN_COLORS[hashString(row.id) % ADMIN_COLORS.length],
+    ministry:
+      role === "Super Admin"
+        ? "Super administrator"
+        : "Church administrator",
+    isCurrentUser: false,
+    twoFactorEnabled: false,
+  };
+};
+
+const getInitials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("") || "AD";
+
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const formatRelativeTime = (iso: string) => {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "—";
+  const diffMs = Date.now() - then;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "Active now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+};
+
 const STATUS_CONFIG: Record<
   AdminStatus,
   { label: string; color: string; bg: string; dot: string; border: string }
@@ -159,89 +226,6 @@ const STATUS_CONFIG: Record<
     border: "#E5E7EB",
   },
 };
-
-const INITIAL_ADMINS: Admin[] = [
-  {
-    id: 1,
-    name: "Pastor Emmanuel Kwame",
-    email: "emmanuel@redeemerschapel.org",
-    phone: "+233 24 000 0001",
-    role: "Super Admin",
-    status: "Active",
-    lastActive: "Active now",
-    memberSince: "Jan 12, 2026",
-    initials: "EK",
-    color: "#78350F",
-    isCurrentUser: true,
-    twoFactorEnabled: true,
-  },
-  {
-    id: 2,
-    name: "Rev. Abena Mensah",
-    email: "abena@redeemerschapel.org",
-    phone: "+233 24 000 0002",
-    role: "Senior Pastor",
-    status: "Active",
-    lastActive: "2 hours ago",
-    memberSince: "Jan 15, 2026",
-    initials: "AM",
-    color: "#6D28D9",
-    twoFactorEnabled: true,
-  },
-  {
-    id: 3,
-    name: "Kweku Asante",
-    email: "kweku@redeemerschapel.org",
-    phone: "+233 24 000 0003",
-    role: "Finance Manager",
-    status: "Active",
-    lastActive: "Yesterday",
-    memberSince: "Feb 3, 2026",
-    initials: "KA",
-    color: "#047857",
-    twoFactorEnabled: true,
-  },
-  {
-    id: 4,
-    name: "Ama Osei",
-    email: "ama@redeemerschapel.org",
-    phone: "+233 24 000 0004",
-    role: "Media & Comms",
-    status: "Active",
-    lastActive: "3 days ago",
-    memberSince: "Feb 10, 2026",
-    initials: "AO",
-    color: "#1D4ED8",
-    twoFactorEnabled: false,
-  },
-  {
-    id: 5,
-    name: "Kofi Boateng",
-    email: "kofi@redeemerschapel.org",
-    phone: "+233 24 000 0005",
-    role: "Events Coordinator",
-    status: "Invited",
-    lastActive: "Pending invite",
-    memberSince: "May 28, 2026",
-    initials: "KB",
-    color: "#C8860A",
-    ministry: "Youth Ministry",
-    twoFactorEnabled: false,
-  },
-  {
-    id: 6,
-    name: "Grace Agyei",
-    email: "grace@redeemerschapel.org",
-    phone: "+233 24 000 0006",
-    role: "Member Care",
-    status: "Suspended",
-    lastActive: "Jun 1, 2026",
-    memberSince: "Mar 1, 2026",
-    initials: "GA",
-    color: "#0F766E",
-    twoFactorEnabled: true,
-  },
-];
 
 const PERMISSION_MATRIX = [
   {
@@ -417,7 +401,7 @@ function InviteSlideOver({
       .toUpperCase();
 
     onInvite({
-      id: Date.now(),
+      id: `local-${Date.now()}`,
       name,
       email,
       phone,
@@ -1131,13 +1115,46 @@ function ManageRolesModal({ onClose }: { onClose: () => void }) {
 
 // ─── Main Admin Management Page ────────────────────────────────────────────────
 export function AdminManagementPage() {
-  const [admins, setAdmins] = useState<Admin[]>(INITIAL_ADMINS);
+  const { user } = useAuth();
+  const churchId = user?.accountType === "ADMIN" ? user.church?.id : undefined;
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [showInvite, setShowInvite] = useState(false);
   const [showRoles, setShowRoles] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
-  const [actionMenu, setActionMenu] = useState<number | null>(null);
+  const [actionMenu, setActionMenu] = useState<string | null>(null);
+
+  const loadAdmins = useCallback(async () => {
+    if (!churchId) {
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const response = await getChurchAdmins(churchId);
+      const currentAdminId = user?.accountType === "ADMIN" ? user.id : undefined;
+      setAdmins(
+        response.admins.map((row) => ({
+          ...mapAdminRow(row),
+          isCurrentUser: row.id === currentAdminId,
+        })),
+      );
+    } catch (err) {
+      setLoadError(
+        err instanceof Error ? err.message : "Unable to load administrators.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [churchId, user]);
+
+  useEffect(() => {
+    void loadAdmins();
+  }, [loadAdmins]);
 
   const filteredAdmins = useMemo(() => {
     return admins.filter((a) => {
@@ -1159,9 +1176,9 @@ export function AdminManagementPage() {
     },
     {
       label: "Active Today",
-      value: admins.filter((a) => a.lastActive.includes("Active") || a.lastActive.includes("hours"))
+      value: admins.filter((a) => a.lastActive.includes("Active") || a.lastActive.includes("ago"))
         .length,
-      sub: "Logged in past 24h",
+      sub: "Logged in recently",
       dot: "#10B981",
     },
     {
@@ -1171,10 +1188,10 @@ export function AdminManagementPage() {
       dot: BRAND_GOLD,
     },
     {
-      label: "Custom Roles",
-      value: 7,
-      sub: "Configured permissions",
-      dot: undefined,
+      label: "Suspended",
+      value: admins.filter((a) => a.status === "Suspended").length,
+      sub: "Privileges revoked",
+      dot: "#EF4444",
     },
   ];
 
@@ -1187,7 +1204,7 @@ export function AdminManagementPage() {
     setSelectedAdmin(updated);
   };
 
-  const handleRemove = (id: number) => {
+  const handleRemove = (id: string) => {
     setAdmins((prev) => prev.filter((a) => a.id !== id));
     setActionMenu(null);
   };
@@ -1296,133 +1313,183 @@ export function AdminManagementPage() {
           </div>
         </div>
 
-        {/* Admins Table */}
-        <div className="rounded-3xl bg-white border border-[#EAE7DC] shadow-sm overflow-hidden">
-          {/* Table Header */}
-          <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3.5 bg-[#FAF8F5] border-b border-[#EAE7DC] text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            <div className="col-span-4">Administrator</div>
-            <div className="col-span-3">Assigned Role</div>
-            <div className="col-span-2">Last Active</div>
-            <div className="col-span-2">Account Status</div>
-            <div className="col-span-1 text-right">Actions</div>
+        {/* Load / error / empty states */}
+        {loading && (
+          <div className="rounded-3xl bg-white border border-[#EAE7DC] shadow-sm py-16 text-center">
+            <div
+              className="w-10 h-10 rounded-2xl mx-auto mb-3 flex items-center justify-center animate-pulse"
+              style={{ backgroundColor: "rgba(200, 134, 10, 0.1)" }}
+            >
+              <ShieldCheck size={18} style={{ color: BRAND_GOLD }} />
+            </div>
+            <p className="text-xs font-medium text-slate-500">
+              Loading administrators…
+            </p>
           </div>
+        )}
 
-          {/* Table Rows */}
-          <div className="divide-y divide-slate-100">
-            {filteredAdmins.length === 0 ? (
-              <div className="py-12 text-center text-slate-400">
-                <p className="text-sm font-medium">No administrators found</p>
-                <p className="text-xs mt-1">Try adjusting your search or filters.</p>
+        {!loading && loadError && (
+          <div className="rounded-3xl bg-red-50 border border-red-200 p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle size={18} style={{ color: "#B91C1C" }} />
+              <div>
+                <p className="text-xs font-bold text-red-800">Could not load administrators</p>
+                <p className="text-[11px] text-red-700">{loadError}</p>
               </div>
-            ) : (
-              filteredAdmins.map((admin) => {
-                const isSuper = admin.role === "Super Admin";
-                return (
-                  <div
-                    key={admin.id}
-                    onClick={() => setSelectedAdmin(admin)}
-                    className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 items-center hover:bg-[#FDFCF7] cursor-pointer transition-colors"
-                  >
-                    {/* Member Info */}
-                    <div className="col-span-4 flex items-center gap-3.5 min-w-0">
-                      <Avatar initials={admin.initials} color={admin.color} size={38} />
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-xs font-bold text-slate-900 truncate">{admin.name}</p>
-                          {admin.isCurrentUser && (
-                            <span
-                              className="px-1.5 py-0.2 rounded text-[9px] font-bold"
-                              style={{
-                                backgroundColor: "rgba(200, 134, 10, 0.12)",
-                                color: GOLD_DARK,
-                              }}
-                            >
-                              YOU
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-400 truncate">{admin.email}</p>
-                      </div>
-                    </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadAdmins()}
+              className="px-3 py-1.5 rounded-xl bg-white border border-red-200 text-xs font-semibold text-red-700 hover:bg-red-100 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
-                    {/* Role */}
-                    <div className="col-span-3">
-                      <RoleBadge role={admin.role} />
-                    </div>
+        {!loading && !loadError && admins.length === 0 && (
+          <div className="rounded-3xl bg-white border border-[#EAE7DC] shadow-sm py-16 text-center">
+            <div
+              className="w-10 h-10 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+              style={{ backgroundColor: "rgba(200, 134, 10, 0.1)" }}
+            >
+              <Shield size={18} style={{ color: BRAND_GOLD }} />
+            </div>
+            <p className="text-sm font-bold text-slate-700">No administrators yet</p>
+            <p className="text-xs text-slate-400 mt-1">
+              This church has no administrators. Use “Invite Admin” to add the first one.
+            </p>
+          </div>
+        )}
 
-                    {/* Last Active */}
-                    <div className="col-span-2 flex items-center gap-1 text-xs text-slate-500">
-                      <Clock size={12} className="text-slate-400 flex-shrink-0" />
-                      <span className="truncate">{admin.lastActive}</span>
-                    </div>
+        {!loading && !loadError && admins.length > 0 && (
+        /* Admins Table */
+        <div className="rounded-3xl bg-white border border-[#EAE7DC] shadow-sm overflow-hidden">
+        <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3.5 bg-[#FAF8F5] border-b border-[#EAE7DC] text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="col-span-4">Administrator</div>
+          <div className="col-span-3">Assigned Role</div>
+          <div className="col-span-2">Last Active</div>
+          <div className="col-span-2">Account Status</div>
+          <div className="col-span-1 text-right">Actions</div>
+        </div>
 
-                    {/* Status */}
-                    <div className="col-span-2">
-                      <StatusBadge status={admin.status} />
-                    </div>
-
-                    {/* Menu Actions */}
-                    <div
-                      className="col-span-1 text-right relative"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActionMenu(actionMenu === admin.id ? null : admin.id)
-                        }
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-                      >
-                        <MoreHorizontal size={16} />
-                      </button>
-
-                      {actionMenu === admin.id && (
-                        <div className="absolute right-0 top-8 z-30 w-44 rounded-2xl bg-white border border-[#E5E3DC] shadow-xl p-1.5 space-y-0.5 text-left text-xs">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedAdmin(admin);
-                              setActionMenu(null);
+        {/* Table Rows */}
+        <div className="divide-y divide-slate-100">
+          {filteredAdmins.length === 0 ? (
+            <div className="py-12 text-center text-slate-400">
+              <p className="text-sm font-medium">No administrators found</p>
+              <p className="text-xs mt-1">Try adjusting your search or filters.</p>
+            </div>
+          ) : (
+            filteredAdmins.map((admin) => {
+              const isSuper = admin.role === "Super Admin";
+              return (
+                <div
+                  key={admin.id}
+                  onClick={() => setSelectedAdmin(admin)}
+                  className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-6 py-4 items-center hover:bg-[#FDFCF7] cursor-pointer transition-colors"
+                >
+                  {/* Member Info */}
+                  <div className="col-span-4 flex items-center gap-3.5 min-w-0">
+                    <Avatar initials={admin.initials} color={admin.color} size={38} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-bold text-slate-900 truncate">{admin.name}</p>
+                        {admin.isCurrentUser && (
+                          <span
+                            className="px-1.5 py-0.2 rounded text-[9px] font-bold"
+                            style={{
+                              backgroundColor: "rgba(200, 134, 10, 0.12)",
+                              color: GOLD_DARK,
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium"
                           >
-                            <Eye size={13} />
-                            <span>View Dossier</span>
-                          </button>
-
-                          {!isSuper && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedAdmin(admin);
-                                  setActionMenu(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium"
-                              >
-                                <Edit3 size={13} />
-                                <span>Edit Privileges</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleRemove(admin.id)}
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 font-medium"
-                              >
-                                <Trash2 size={13} />
-                                <span>Remove Admin</span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      )}
+                            YOU
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate">{admin.email}</p>
                     </div>
                   </div>
-                );
-              })
-            )}
-          </div>
+
+                  {/* Role */}
+                  <div className="col-span-3">
+                    <RoleBadge role={admin.role} />
+                  </div>
+
+                  {/* Last Active */}
+                  <div className="col-span-2 flex items-center gap-1 text-xs text-slate-500">
+                    <Clock size={12} className="text-slate-400 flex-shrink-0" />
+                    <span className="truncate">{admin.lastActive}</span>
+                  </div>
+
+                  {/* Status */}
+                  <div className="col-span-2">
+                    <StatusBadge status={admin.status} />
+                  </div>
+
+                  {/* Menu Actions */}
+                  <div
+                    className="col-span-1 text-right relative"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActionMenu(actionMenu === admin.id ? null : admin.id)
+                      }
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+
+                    {actionMenu === admin.id && (
+                      <div className="absolute right-0 top-8 z-30 w-44 rounded-2xl bg-white border border-[#E5E3DC] shadow-xl p-1.5 space-y-0.5 text-left text-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedAdmin(admin);
+                            setActionMenu(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium"
+                        >
+                          <Eye size={13} />
+                          <span>View Dossier</span>
+                        </button>
+
+                        {!isSuper && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedAdmin(admin);
+                                setActionMenu(null);
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 font-medium"
+                            >
+                              <Edit3 size={13} />
+                              <span>Edit Privileges</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemove(admin.id)}
+                              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 font-medium"
+                            >
+                              <Trash2 size={13} />
+                              <span>Remove Admin</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
+      </div>
+      )}
 
         {/* Audit Trail Banner */}
         <div className="p-4 rounded-2xl bg-white border border-[#EAE7DC] shadow-2xs flex items-center justify-between gap-4 flex-wrap">
