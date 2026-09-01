@@ -86,6 +86,19 @@ npm run lint
 
 Note: this project was migrated from a Figma Make export. Some older dashboard files may still contain pre-existing lint warnings/errors unrelated to the landing and onboarding redesign.
 
+## Testing
+
+Vitest + React Testing Library (jsdom). Covers the auth/session layer (incl. the `/auth/me` 401 no-refresh-loop regression), route guards, and shared logic.
+
+```bash
+npm test              # run once (CI)
+npm run test:watch    # watch mode
+npm run test:run      # run once (alias)
+npm run test:coverage # run with v8 coverage
+```
+
+Configuration lives in `vitest.config.ts` (setup file: `src/test/setup.ts`).
+
 ## App Routes
 
 - `/` - ChurchEden landing page
