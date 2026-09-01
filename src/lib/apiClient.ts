@@ -2,6 +2,7 @@
 import { env } from "@/env";
 import { AppError } from "./errors";
 import { withRefreshMutex } from "./refreshMutex";
+import { emitSessionExpired } from "./session-events";
 
 export { AppError, ApiError, isAppError, ERROR_CODES } from "./errors";
 
@@ -58,8 +59,14 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
     body: payload,
   });
 
-  // Handle 401 token refresh retry (empty body for Web HttpOnly cookie)
-  if (res.status === 401 && !isRetry && !path.includes('/auth/login') && !path.includes('/auth/refresh')) {
+  // Handle 401 by attempting a single token refresh, then retrying the request.
+  // `/auth/me` is the session probe: a 401 from it simply means "not signed in",
+  // so it must NOT trigger a refresh + reload cycle (a full page reload here was
+  // the cause of the infinite refresh/redirect loop on public pages for
+  // unauthenticated visitors).
+  const noRefreshPaths = ['/auth/login', '/auth/refresh', '/auth/me'];
+  if (res.status === 401 && !isRetry && !noRefreshPaths.some((p) => path.includes(p))) {
+    let refreshed = false;
     await withRefreshMutex(async () => {
       const refresh = await fetch(apiUrl('/auth/refresh'), {
         method: 'POST',
@@ -67,14 +74,15 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
         credentials: 'include',
         // Web: empty body — HttpOnly cookie carries the refresh token
       });
-      if (!refresh.ok) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/onboarding/sign-in';
-        }
-        throw new AppError('TOKEN_EXPIRED', 'Session expired.', undefined, 401);
-      }
+      refreshed = refresh.ok;
     });
-    return request<T>(path, options, true);
+    if (refreshed) {
+      return request<T>(path, options, true);
+    }
+    // Refresh failed — the session is expired. Signal the auth layer so it can
+    // clear state and let route guards redirect (client-side, no reload).
+    emitSessionExpired();
+    throw new AppError('TOKEN_EXPIRED', 'Session expired.', undefined, 401);
   }
 
   if (!res.ok) {

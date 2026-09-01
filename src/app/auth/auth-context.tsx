@@ -9,6 +9,7 @@ import {
 } from "react";
 import * as authApi from "@/lib/auth-api";
 import { env } from "@/env";
+import { onSessionExpired } from "@/lib/session-events";
 import type { AuthUser } from "@/types/auth";
 
 interface AuthContextValue {
@@ -53,6 +54,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     void bootstrap();
   }, [hydrateUser]);
+
+  // When a protected API call fails to refresh the session (expired session),
+  // clear the user so route guards can redirect to sign-in client-side. This is
+  // intentionally NOT a full page reload, which would remount the provider and
+  // re-run /auth/me, causing an infinite refresh/redirect loop.
+  useEffect(() => {
+    const unsubscribe = onSessionExpired(() => setUser(null));
+    return unsubscribe;
+  }, []);
 
   const setSessionFromTokens = useCallback(
     async (_accessToken?: string, _refreshToken?: string) => {
