@@ -163,6 +163,7 @@ export function LocationContactStep() {
           </EdenButton>
           <EdenButton
             type="submit"
+            form="location-contact-form"
             disabled={submitting}
             className="bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/20 px-7 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
