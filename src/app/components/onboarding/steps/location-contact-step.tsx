@@ -6,6 +6,10 @@ import { EdenField, EdenSelect } from "../eden-field";
 import { EdenButton } from "../eden-button";
 import { useOnboarding } from "../onboarding-context";
 import { locationContactSchema } from "../onboarding-schemas";
+import { ensureCachedUpTo } from "../onboarding-guard";
+import { saveStep2 } from "@/lib/onboarding-api";
+import { toast } from "sonner";
+import type { ChurchLanguage } from "@/types/api";
 import churchExterior from "@/assets/onboarding/church-exterior.jpg";
 
 interface CountryConfig {
@@ -78,7 +82,7 @@ export function LocationContactStep() {
     if (errors.country) setErrors((prev) => ({ ...prev, country: "" }));
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
 
@@ -95,8 +99,27 @@ export function LocationContactStep() {
       return;
     }
 
+    const missingBefore = await ensureCachedUpTo("location-contact");
+    if (missingBefore) {
+      navigate(`/onboarding/${missingBefore}`);
+      return;
+    }
+
     updateData(result.data);
-    navigate("/onboarding/service-branding");
+    try {
+      await saveStep2({
+        country: result.data.country,
+        city: result.data.city,
+        address: result.data.address,
+        phone: result.data.churchPhone,
+        email: result.data.churchEmail,
+        primaryLanguage: result.data.primaryLanguage as ChurchLanguage,
+        timeZone: result.data.timezone,
+      });
+      navigate("/onboarding/service-branding");
+    } catch (error) {
+      toast.error("Failed to save location & contact. Please try again.");
+    }
   };
 
   return (

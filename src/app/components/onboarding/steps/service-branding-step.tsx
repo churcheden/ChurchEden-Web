@@ -13,6 +13,9 @@ import { OnboardingLayout } from "../onboarding-layout";
 import { EdenButton } from "../eden-button";
 import { useOnboarding, type ServiceTimeItem } from "../onboarding-context";
 import { serviceBrandingSchema } from "../onboarding-schemas";
+import { ensureCachedUpTo } from "../onboarding-guard";
+import { saveStep3, type ServiceTimeInput } from "@/lib/onboarding-api";
+import { toast } from "sonner";
 import churchWorship from "@/assets/onboarding/church-worship.jpg";
 
 const DAYS_OF_WEEK = [
@@ -24,6 +27,16 @@ const DAYS_OF_WEEK = [
   "Friday",
   "Saturday",
 ];
+
+const DAY_TO_INDEX: Record<string, number> = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+};
 
 export function ServiceBrandingStep() {
   const navigate = useNavigate();
@@ -63,8 +76,8 @@ export function ServiceBrandingStep() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      setErrors((prev) => ({ ...prev, logo: "Logo file size must be under 2MB." }));
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, logo: "Logo file size must be under 5MB." }));
       return;
     }
 
@@ -77,7 +90,7 @@ export function ServiceBrandingStep() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
 
@@ -94,12 +107,29 @@ export function ServiceBrandingStep() {
       return;
     }
 
+    const missingBefore = await ensureCachedUpTo("service-branding");
+    if (missingBefore) {
+      navigate(`/onboarding/${missingBefore}`);
+      return;
+    }
+
     updateData({
       serviceTimes,
       churchLogo: logoFile,
     });
 
-    navigate("/onboarding/ministries");
+    const payload: ServiceTimeInput[] = serviceTimes.map((service) => ({
+      label: service.label,
+      dayOfWeek: DAY_TO_INDEX[service.day] ?? 0,
+      time: service.time,
+    }));
+
+    try {
+      await saveStep3(payload, logoFile);
+      navigate("/onboarding/ministries");
+    } catch (error) {
+      toast.error("Failed to save service & branding. Please try again.");
+    }
   };
 
   return (
@@ -230,21 +260,15 @@ export function ServiceBrandingStep() {
           </label>
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="h-32 rounded-2xl border-2 border-dashed border-[#E5E3DC] hover:border-[#1B2A4A] bg-[#FAFAF8] hover:bg-[#EFF6FF]/40 p-4 text-center cursor-pointer transition-all flex flex-col items-center justify-center relative overflow-hidden group"
+            className="h-32 rounded-2xl border-2 border-dashed border-[#E5E3DC] hover:border-[#1B2A4A] bg-[#FAFAF8] hover:bg-[#EFF6FF]/40 p-4 text-center cursor-pointer transition-all flex items-center justify-center relative overflow-hidden group"
           >
             {logoPreview ? (
-              <div className="flex items-center gap-3">
+              <div className="w-24 h-24 rounded-2xl border border-slate-200 bg-white shadow-sm flex items-center justify-center overflow-hidden group-hover:ring-2 group-hover:ring-[#1B2A4A]/30 transition-all">
                 <img
                   src={logoPreview}
                   alt="Logo preview"
-                  className="w-14 h-14 object-contain rounded-xl border border-slate-200 bg-white p-1"
+                  className="w-full h-full object-contain p-2"
                 />
-                <div className="text-left">
-                  <p className="text-xs font-semibold text-slate-800 truncate max-w-[200px]">
-                    {logoFile?.name}
-                  </p>
-                  <span className="text-[11px] text-[#1B2A4A] font-medium">Click to replace</span>
-                </div>
               </div>
             ) : (
               <>
@@ -252,7 +276,7 @@ export function ServiceBrandingStep() {
                   <Upload size={18} />
                 </div>
                 <p className="text-xs font-semibold text-slate-700">Upload church logo</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">SVG, PNG or JPG (max 2MB)</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">SVG, PNG or JPG (max 5MB)</p>
               </>
             )}
 
@@ -264,6 +288,12 @@ export function ServiceBrandingStep() {
               onChange={handleLogoChange}
             />
           </div>
+          {logoPreview && (
+            <p className="text-[11px] text-[#1B2A4A] font-medium text-center mt-1.5">
+              {logoFile?.name}
+              <span className="text-slate-400 font-normal"> — click preview to replace</span>
+            </p>
+          )}
           {errors.logo && <p className="text-xs text-red-500 mt-1">{errors.logo}</p>}
         </div>
       </form>

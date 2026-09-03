@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import confetti from "canvas-confetti";
 import { motion } from "motion/react";
@@ -10,9 +10,13 @@ import {
   Building2,
   Users,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { EdenButton } from "../eden-button";
 import { useOnboarding } from "../onboarding-context";
+import { ensureCachedUpTo } from "../onboarding-guard";
+import { completeOnboarding } from "@/lib/onboarding-api";
+import { toast } from "sonner";
 import { EdenLogo } from "../eden-logo";
 
 const AUTO_REDIRECT_MS = 6000;
@@ -20,8 +24,29 @@ const AUTO_REDIRECT_MS = 6000;
 export function SetupCompleteStep() {
   const navigate = useNavigate();
   const { data } = useOnboarding();
+  const [submitting, setSubmitting] = useState(false);
+  const doneRef = useRef(false);
 
-  const enterDashboard = () => navigate("/dashboard");
+  const enterDashboard = useCallback(async () => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    setSubmitting(true);
+
+    try {
+      const missing = await ensureCachedUpTo("complete");
+      if (missing) {
+        navigate(`/onboarding/${missing}`, { replace: true });
+        return;
+      }
+      await completeOnboarding();
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      doneRef.current = false;
+      setSubmitting(false);
+      toast.error("Failed to complete church setup. Please try again.");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     confetti({
@@ -31,7 +56,9 @@ export function SetupCompleteStep() {
       colors: ["#1B2A4A", "#C8860A", "#2563EB", "#D4A628", "#ffffff"],
     });
 
-    const timer = setTimeout(enterDashboard, AUTO_REDIRECT_MS);
+    const timer = setTimeout(() => {
+      enterDashboard();
+    }, AUTO_REDIRECT_MS);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -114,15 +141,29 @@ export function SetupCompleteStep() {
           <div className="space-y-3">
             <EdenButton
               onClick={enterDashboard}
-              className="w-full bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/25 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all"
+              disabled={submitting}
+              className="w-full bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/25 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <span>Enter Church Dashboard</span>
-              <ArrowRight size={16} />
+              {submitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Completing setup...</span>
+                </>
+              ) : (
+                <>
+                  <span>Enter Church Dashboard</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
             </EdenButton>
 
             <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
               <Sparkles size={12} className="text-amber-500" />
-              <span>Redirecting automatically in a few seconds...</span>
+              <span>
+                {submitting
+                  ? "Saving your church to the database..."
+                  : "Redirecting automatically in a few seconds..."}
+              </span>
             </p>
           </div>
         </motion.div>

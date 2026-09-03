@@ -15,6 +15,9 @@ import {
 import { OnboardingLayout } from "../onboarding-layout";
 import { EdenButton } from "../eden-button";
 import { useOnboarding, type CustomMinistryItem } from "../onboarding-context";
+import { ensureCachedUpTo } from "../onboarding-guard";
+import { saveStep4 } from "@/lib/onboarding-api";
+import { toast } from "sonner";
 import {
   PREDEFINED_GROUPS,
   MINISTRY_ICON_PICKER,
@@ -63,13 +66,34 @@ export function MinistriesStep() {
 
   const visibleCustom = custom.filter((c) => matches(c.name));
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const missingBefore = await ensureCachedUpTo("ministries");
+    if (missingBefore) {
+      navigate(`/onboarding/${missingBefore}`);
+      return;
+    }
+
     updateData({
       selectedMinistryIds: selectedIds,
       customMinistries: custom,
     });
-    navigate("/onboarding/complete");
+
+    try {
+      await saveStep4({
+        ministryIds: selectedIds,
+        customMinistries: custom.map((c) => ({
+          name: c.name,
+          type: c.type,
+          description: c.description,
+          icon: c.icon,
+        })),
+      });
+      navigate("/onboarding/complete");
+    } catch (error) {
+      toast.error("Failed to save ministries. Please try again.");
+    }
   };
 
   return (
