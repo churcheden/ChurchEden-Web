@@ -14,12 +14,33 @@ import {
 } from "lucide-react";
 import { EdenButton } from "../eden-button";
 import { useOnboarding } from "../onboarding-context";
-import { ensureCachedUpTo } from "../onboarding-guard";
 import { completeOnboarding } from "@/lib/onboarding-api";
+import { isAppError } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { EdenLogo } from "../eden-logo";
 
 const AUTO_REDIRECT_MS = 6000;
+
+const STEP_PATH: Record<string, string> = {
+  "step-1": "/onboarding/church-basics",
+  "step-2": "/onboarding/location-contact",
+  "step-3": "/onboarding/service-branding",
+  "step-4": "/onboarding/ministries",
+};
+
+function resolveMissingStepRoute(error: unknown): string | null {
+  if (isAppError(error) && error.code === "DRAFT_NOT_FOUND") {
+    return "/onboarding/church-basics";
+  }
+  const message = error instanceof Error ? error.message : "";
+  // findIncompleteSteps lists missing steps in ascending order, so the first
+  // occurrence in the message is the earliest step the user still needs to do.
+  const steps = ["step-1", "step-2", "step-3", "step-4"].filter((s) => message.includes(s));
+  if (steps.length > 0) {
+    return STEP_PATH[steps[0]] ?? "/onboarding/church-basics";
+  }
+  return null;
+}
 
 export function SetupCompleteStep() {
   const navigate = useNavigate();
@@ -33,14 +54,14 @@ export function SetupCompleteStep() {
     setSubmitting(true);
 
     try {
-      const missing = await ensureCachedUpTo("complete");
-      if (missing) {
-        navigate(`/onboarding/${missing}`, { replace: true });
-        return;
-      }
       await completeOnboarding();
       navigate("/dashboard", { replace: true });
     } catch (error) {
+      const missingRoute = resolveMissingStepRoute(error);
+      if (missingRoute) {
+        navigate(missingRoute, { replace: true });
+        return;
+      }
       doneRef.current = false;
       setSubmitting(false);
       toast.error("Failed to complete church setup. Please try again.");

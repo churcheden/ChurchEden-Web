@@ -104,9 +104,18 @@ Configuration lives in `vitest.config.ts` (setup file: `src/test/setup.ts`).
 - `/` - ChurchEden landing page
 - `/onboarding/welcome` - sign-up entry
 - `/onboarding/sign-in` - sign-in entry
-- `/onboarding/church-profile` - church profile setup
-- `/onboarding/complete` - setup completion and dashboard redirect
+- `/onboarding/church-basics` - Step 1: church basics (founder + church info)
+- `/onboarding/location-contact` - Step 2: location & contact
+- `/onboarding/service-branding` - Step 3: service times + church logo upload
+- `/onboarding/ministries` - Step 4: ministries & departments
+- `/onboarding/complete` - setup completion; calls `completeChurchOnboarding` then redirects to `/dashboard`
 - `/dashboard` - existing dashboard
+
+Each step persists to the backend on submit (`PATCH /onboarding/church/step-N`).
+The backend enforces strictly sequential onboarding (every earlier step must be
+saved first) and returns `STEP_1_REQUIRED` / `STEP_2_REQUIRED` /
+`STEP_3_REQUIRED` (or `INCOMPLETE_ONBOARDING` from `/complete`); the UI redirects
+to the corresponding step when one of those is returned.
 
 ## Backend Integration
 

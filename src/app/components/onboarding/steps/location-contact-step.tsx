@@ -6,8 +6,8 @@ import { EdenField, EdenSelect } from "../eden-field";
 import { EdenButton } from "../eden-button";
 import { useOnboarding } from "../onboarding-context";
 import { locationContactSchema } from "../onboarding-schemas";
-import { ensureCachedUpTo } from "../onboarding-guard";
 import { saveStep2 } from "@/lib/onboarding-api";
+import { isAppError } from "@/lib/apiClient";
 import { toast } from "sonner";
 import type { ChurchLanguage } from "@/types/api";
 import churchExterior from "@/assets/onboarding/church-exterior.jpg";
@@ -99,12 +99,6 @@ export function LocationContactStep() {
       return;
     }
 
-    const missingBefore = await ensureCachedUpTo("location-contact");
-    if (missingBefore) {
-      navigate(`/onboarding/${missingBefore}`);
-      return;
-    }
-
     updateData(result.data);
     try {
       await saveStep2({
@@ -118,6 +112,10 @@ export function LocationContactStep() {
       });
       navigate("/onboarding/service-branding");
     } catch (error) {
+      if (isAppError(error) && error.code === "STEP_1_REQUIRED") {
+        navigate("/onboarding/church-basics");
+        return;
+      }
       toast.error("Failed to save location & contact. Please try again.");
     }
   };

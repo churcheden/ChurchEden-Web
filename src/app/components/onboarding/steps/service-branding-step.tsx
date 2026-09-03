@@ -13,8 +13,8 @@ import { OnboardingLayout } from "../onboarding-layout";
 import { EdenButton } from "../eden-button";
 import { useOnboarding, type ServiceTimeItem } from "../onboarding-context";
 import { serviceBrandingSchema } from "../onboarding-schemas";
-import { ensureCachedUpTo } from "../onboarding-guard";
 import { saveStep3, type ServiceTimeInput } from "@/lib/onboarding-api";
+import { isAppError } from "@/lib/apiClient";
 import { toast } from "sonner";
 import churchWorship from "@/assets/onboarding/church-worship.jpg";
 
@@ -107,12 +107,6 @@ export function ServiceBrandingStep() {
       return;
     }
 
-    const missingBefore = await ensureCachedUpTo("service-branding");
-    if (missingBefore) {
-      navigate(`/onboarding/${missingBefore}`);
-      return;
-    }
-
     updateData({
       serviceTimes,
       churchLogo: logoFile,
@@ -128,6 +122,16 @@ export function ServiceBrandingStep() {
       await saveStep3(payload, logoFile);
       navigate("/onboarding/ministries");
     } catch (error) {
+      if (isAppError(error)) {
+        if (error.code === "STEP_1_REQUIRED") {
+          navigate("/onboarding/church-basics");
+          return;
+        }
+        if (error.code === "STEP_2_REQUIRED") {
+          navigate("/onboarding/location-contact");
+          return;
+        }
+      }
       toast.error("Failed to save service & branding. Please try again.");
     }
   };

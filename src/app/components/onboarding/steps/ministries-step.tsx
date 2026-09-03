@@ -15,8 +15,8 @@ import {
 import { OnboardingLayout } from "../onboarding-layout";
 import { EdenButton } from "../eden-button";
 import { useOnboarding, type CustomMinistryItem } from "../onboarding-context";
-import { ensureCachedUpTo } from "../onboarding-guard";
 import { saveStep4 } from "@/lib/onboarding-api";
+import { isAppError } from "@/lib/apiClient";
 import { toast } from "sonner";
 import {
   PREDEFINED_GROUPS,
@@ -69,12 +69,6 @@ export function MinistriesStep() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    const missingBefore = await ensureCachedUpTo("ministries");
-    if (missingBefore) {
-      navigate(`/onboarding/${missingBefore}`);
-      return;
-    }
-
     updateData({
       selectedMinistryIds: selectedIds,
       customMinistries: custom,
@@ -92,6 +86,20 @@ export function MinistriesStep() {
       });
       navigate("/onboarding/complete");
     } catch (error) {
+      if (isAppError(error)) {
+        if (error.code === "STEP_1_REQUIRED") {
+          navigate("/onboarding/church-basics");
+          return;
+        }
+        if (error.code === "STEP_2_REQUIRED") {
+          navigate("/onboarding/location-contact");
+          return;
+        }
+        if (error.code === "STEP_3_REQUIRED") {
+          navigate("/onboarding/service-branding");
+          return;
+        }
+      }
       toast.error("Failed to save ministries. Please try again.");
     }
   };
