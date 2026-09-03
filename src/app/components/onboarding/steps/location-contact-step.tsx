@@ -1,48 +1,34 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
-import { MapPin, Globe, Phone, Mail, Clock, Languages, ArrowRight, ArrowLeft, Church } from "lucide-react";
+import { MapPin, Globe, Mail, Clock, Languages, ArrowRight, ArrowLeft, Church, Loader2 } from "lucide-react";
 import { OnboardingLayout } from "../onboarding-layout";
 import { EdenField, EdenSelect } from "../eden-field";
 import { EdenButton } from "../eden-button";
+import { EdenPhoneField } from "../eden-phone-field";
 import { useOnboarding } from "../onboarding-context";
 import { locationContactSchema } from "../onboarding-schemas";
 import { saveStep2 } from "@/lib/onboarding-api";
 import { isAppError } from "@/lib/apiClient";
 import { toast } from "sonner";
+import {
+  PHONE_COUNTRIES,
+  DEFAULT_PHONE_COUNTRY,
+  buildE164Phone,
+  type PhoneCountry,
+} from "@/app/lib/phone-countries";
 import type { ChurchLanguage } from "@/types/api";
 import churchExterior from "@/assets/onboarding/church-exterior.jpg";
 
-interface CountryConfig {
-  name: string;
-  defaultTimezone: string;
-  defaultLanguage: string;
-  phonePrefix: string;
-}
-
-const COUNTRIES: CountryConfig[] = [
-  { name: "Ghana", defaultTimezone: "UTC+00:00 (Africa/Accra)", defaultLanguage: "English", phonePrefix: "+233 " },
-  { name: "Nigeria", defaultTimezone: "UTC+01:00 (Africa/Lagos)", defaultLanguage: "English", phonePrefix: "+234 " },
-  { name: "Kenya", defaultTimezone: "UTC+03:00 (Africa/Nairobi)", defaultLanguage: "English", phonePrefix: "+254 " },
-  { name: "South Africa", defaultTimezone: "UTC+02:00 (Africa/Johannesburg)", defaultLanguage: "English", phonePrefix: "+27 " },
-  { name: "United Kingdom", defaultTimezone: "UTC+00:00 (Europe/London)", defaultLanguage: "English", phonePrefix: "+44 " },
-  { name: "United States", defaultTimezone: "UTC-05:00 (America/New_York)", defaultLanguage: "English", phonePrefix: "+1 " },
-  { name: "Canada", defaultTimezone: "UTC-05:00 (America/Toronto)", defaultLanguage: "English", phonePrefix: "+1 " },
-  { name: "Liberia", defaultTimezone: "UTC+00:00 (Africa/Monrovia)", defaultLanguage: "English", phonePrefix: "+231 " },
-  { name: "Sierra Leone", defaultTimezone: "UTC+00:00 (Africa/Freetown)", defaultLanguage: "English", phonePrefix: "+232 " },
-  { name: "Ivory Coast", defaultTimezone: "UTC+00:00 (Africa/Abidjan)", defaultLanguage: "French", phonePrefix: "+225 " },
-  { name: "Other", defaultTimezone: "UTC+00:00 (UTC)", defaultLanguage: "English", phonePrefix: "+" },
-];
-
 const TIMEZONES = [
-  { value: "UTC+00:00 (Africa/Accra)", label: "UTC+00:00 — Accra, Monrovia, London (GMT)" },
-  { value: "UTC+01:00 (Africa/Lagos)", label: "UTC+01:00 — Lagos, Abuja, London (BST)" },
-  { value: "UTC+02:00 (Africa/Johannesburg)", label: "UTC+02:00 — Johannesburg, Harare, Cairo" },
-  { value: "UTC+03:00 (Africa/Nairobi)", label: "UTC+03:00 — Nairobi, Kampala, Addis Ababa" },
-  { value: "UTC+00:00 (Europe/London)", label: "UTC+00:00 — London, Dublin, Lisbon" },
-  { value: "UTC-05:00 (America/New_York)", label: "UTC-05:00 — New York, Toronto, Miami (EST)" },
-  { value: "UTC-06:00 (America/Chicago)", label: "UTC-06:00 — Chicago, Dallas (CST)" },
-  { value: "UTC-08:00 (America/Los_Angeles)", label: "UTC-08:00 — Los Angeles, Vancouver (PST)" },
-  { value: "UTC+00:00 (UTC)", label: "UTC (Coordinated Universal Time)" },
+  { value: "UTC+00:00 (Africa/Accra)", iana: "Africa/Accra", label: "UTC+00:00 — Accra, Monrovia, London (GMT)" },
+  { value: "UTC+01:00 (Africa/Lagos)", iana: "Africa/Lagos", label: "UTC+01:00 — Lagos, Abuja, London (BST)" },
+  { value: "UTC+02:00 (Africa/Johannesburg)", iana: "Africa/Johannesburg", label: "UTC+02:00 — Johannesburg, Harare, Cairo" },
+  { value: "UTC+03:00 (Africa/Nairobi)", iana: "Africa/Nairobi", label: "UTC+03:00 — Nairobi, Kampala, Addis Ababa" },
+  { value: "UTC+00:00 (Europe/London)", iana: "Europe/London", label: "UTC+00:00 — London, Dublin, Lisbon" },
+  { value: "UTC-05:00 (America/New_York)", iana: "America/New_York", label: "UTC-05:00 — New York, Toronto, Miami (EST)" },
+  { value: "UTC-06:00 (America/Chicago)", iana: "America/Chicago", label: "UTC-06:00 — Chicago, Dallas (CST)" },
+  { value: "UTC-08:00 (America/Los_Angeles)", iana: "America/Los_Angeles", label: "UTC-08:00 — Los Angeles, Vancouver (PST)" },
+  { value: "UTC+00:00 (UTC)", iana: "UTC", label: "UTC (Coordinated Universal Time)" },
 ];
 
 const LANGUAGES = [
@@ -51,40 +37,66 @@ const LANGUAGES = [
   { value: "Spanish", label: "Spanish (Español)" },
 ];
 
+const LANGUAGE_ENUM: Record<string, ChurchLanguage> = {
+  English: "ENGLISH",
+  French: "FRENCH",
+  Spanish: "SPANISH",
+};
+
 export function LocationContactStep() {
   const navigate = useNavigate();
   const { data, updateData } = useOnboarding();
 
+  const initialCountry =
+    PHONE_COUNTRIES.find((c) => c.name === data.country) ?? DEFAULT_PHONE_COUNTRY;
+
   const [form, setForm] = useState({
-    country: data.country || "Ghana",
+    country: initialCountry.name,
     city: data.city,
     address: data.address,
-    churchPhone: data.churchPhone || "+233 ",
+    churchPhone: data.churchPhone || initialCountry.dialCode,
     churchEmail: data.churchEmail,
-    primaryLanguage: data.primaryLanguage || "English",
-    timezone: data.timezone || "UTC+00:00 (Africa/Accra)",
+    primaryLanguage: data.primaryLanguage || initialCountry.defaultLanguage,
+    timezone: data.timezone || initialCountry.defaultTimezone,
+  });
+
+  const [phoneLocal, setPhoneLocal] = useState(() => {
+    const dial = initialCountry.dialCode;
+    return data.churchPhone && data.churchPhone.startsWith(dial)
+      ? data.churchPhone.slice(dial.length)
+      : "";
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleCountryChange = (selectedCountry: string) => {
-    const config = COUNTRIES.find((c) => c.name === selectedCountry);
+  const currentCountry: PhoneCountry =
+    PHONE_COUNTRIES.find((c) => c.name === form.country) ?? DEFAULT_PHONE_COUNTRY;
+
+  const applyCountry = (country: PhoneCountry) => {
     setForm((prev) => ({
       ...prev,
-      country: selectedCountry,
-      timezone: config ? config.defaultTimezone : prev.timezone,
-      primaryLanguage: config ? config.defaultLanguage : prev.primaryLanguage,
-      churchPhone:
-        prev.churchPhone === "" || COUNTRIES.some((c) => prev.churchPhone === c.phonePrefix)
-          ? config?.phonePrefix || "+ "
-          : prev.churchPhone,
+      country: country.name,
+      timezone: country.defaultTimezone,
+      primaryLanguage: country.defaultLanguage,
+      churchPhone: buildE164Phone(country.dialCode, phoneLocal),
     }));
     if (errors.country) setErrors((prev) => ({ ...prev, country: "" }));
+  };
+
+  const handleLocalChange = (local: string) => {
+    setPhoneLocal(local);
+    setForm((prev) => ({
+      ...prev,
+      churchPhone: buildE164Phone(currentCountry.dialCode, local),
+    }));
+    if (errors.churchPhone) setErrors((prev) => ({ ...prev, churchPhone: "" }));
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setErrors({});
+    setSubmitting(true);
 
     const result = locationContactSchema.safeParse(form);
     if (!result.success) {
@@ -96,19 +108,22 @@ export function LocationContactStep() {
         }
       }
       setErrors(fieldErrors);
+      setSubmitting(false);
       return;
     }
 
     updateData(result.data);
     try {
+      const timeZone =
+        TIMEZONES.find((t) => t.value === result.data.timezone)?.iana ?? "UTC";
       await saveStep2({
-        country: result.data.country,
+        country: currentCountry.iso,
         city: result.data.city,
         address: result.data.address,
-        phone: result.data.churchPhone,
+        phone: result.data.churchPhone || buildE164Phone(currentCountry.dialCode, phoneLocal),
         email: result.data.churchEmail,
-        primaryLanguage: result.data.primaryLanguage as ChurchLanguage,
-        timeZone: result.data.timezone,
+        primaryLanguage: LANGUAGE_ENUM[result.data.primaryLanguage] ?? currentCountry.languageEnum,
+        timeZone,
       });
       navigate("/onboarding/service-branding");
     } catch (error) {
@@ -117,6 +132,8 @@ export function LocationContactStep() {
         return;
       }
       toast.error("Failed to save location & contact. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -137,6 +154,7 @@ export function LocationContactStep() {
           <EdenButton
             type="button"
             variant="outline"
+            disabled={submitting}
             onClick={() => navigate("/onboarding/church-basics")}
             className="text-slate-700 hover:bg-slate-50 border-slate-200 px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1.5"
           >
@@ -145,11 +163,20 @@ export function LocationContactStep() {
           </EdenButton>
           <EdenButton
             type="submit"
-            form="location-contact-form"
-            className="bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/20 px-7 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all"
+            disabled={submitting}
+            className="bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/20 px-7 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <span>Next</span>
-            <ArrowRight size={14} />
+            {submitting ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <span>Next</span>
+                <ArrowRight size={14} />
+              </>
+            )}
           </EdenButton>
         </>
       }
@@ -160,9 +187,12 @@ export function LocationContactStep() {
             id="country"
             label="Country"
             icon={<Globe size={18} />}
-            options={COUNTRIES.map((c) => ({ value: c.name, label: c.name }))}
+            options={PHONE_COUNTRIES.map((c) => ({ value: c.name, label: c.name }))}
             value={form.country}
-            onChange={(e) => handleCountryChange(e.target.value)}
+            disabled={submitting}
+            onChange={(e) => {
+              applyCountry(PHONE_COUNTRIES.find((c) => c.name === e.target.value) ?? DEFAULT_PHONE_COUNTRY);
+            }}
             error={errors.country}
             required
           />
@@ -172,6 +202,7 @@ export function LocationContactStep() {
             label="City"
             placeholder="e.g. Accra"
             icon={<MapPin size={18} />}
+            disabled={submitting}
             value={form.city}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, city: e.target.value }));
@@ -187,6 +218,7 @@ export function LocationContactStep() {
           label="Address"
           placeholder="Enter physical church address"
           icon={<MapPin size={18} />}
+          disabled={submitting}
           value={form.address}
           onChange={(e) => {
             setForm((prev) => ({ ...prev, address: e.target.value }));
@@ -197,19 +229,16 @@ export function LocationContactStep() {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <EdenField
+          <EdenPhoneField
             id="church-phone"
             label="Church Phone"
-            type="tel"
-            placeholder="+233 24 123 4567"
-            icon={<Phone size={18} />}
-            value={form.churchPhone}
-            onChange={(e) => {
-              setForm((prev) => ({ ...prev, churchPhone: e.target.value }));
-              if (errors.churchPhone) setErrors((prev) => ({ ...prev, churchPhone: "" }));
-            }}
+            selected={currentCountry}
+            local={phoneLocal}
+            onCountryChange={applyCountry}
+            onLocalChange={handleLocalChange}
+            disabled={submitting}
             error={errors.churchPhone}
-            required
+            hint="Select your country flag, then enter your local number."
           />
 
           <EdenField
@@ -218,6 +247,7 @@ export function LocationContactStep() {
             type="email"
             placeholder="info@yourchurch.org"
             icon={<Mail size={18} />}
+            disabled={submitting}
             value={form.churchEmail}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, churchEmail: e.target.value }));
@@ -234,6 +264,7 @@ export function LocationContactStep() {
             label="Primary Language"
             icon={<Languages size={18} />}
             options={LANGUAGES}
+            disabled={submitting}
             value={form.primaryLanguage}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, primaryLanguage: e.target.value }));
@@ -248,6 +279,7 @@ export function LocationContactStep() {
             label="Time Zone"
             icon={<Clock size={18} />}
             options={TIMEZONES}
+            disabled={submitting}
             value={form.timezone}
             onChange={(e) => {
               setForm((prev) => ({ ...prev, timezone: e.target.value }));
