@@ -15,6 +15,7 @@ import {
 import { EdenButton } from "../eden-button";
 import { useOnboarding } from "../onboarding-context";
 import { completeOnboarding } from "@/lib/onboarding-api";
+import { useAuth } from "@/app/auth/auth-context";
 import { isAppError } from "@/lib/apiClient";
 import { toast } from "sonner";
 import { EdenLogo } from "../eden-logo";
@@ -45,6 +46,7 @@ function resolveMissingStepRoute(error: unknown): string | null {
 export function SetupCompleteStep() {
   const navigate = useNavigate();
   const { data } = useOnboarding();
+  const { hydrateUser } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const doneRef = useRef(false);
 
@@ -55,6 +57,9 @@ export function SetupCompleteStep() {
 
     try {
       await completeOnboarding();
+      // Refresh the session so the auth context reflects the newly provisioned
+      // church — used by route guards to keep onboarded users out of this flow.
+      await hydrateUser();
       navigate("/dashboard", { replace: true });
     } catch (error) {
       const missingRoute = resolveMissingStepRoute(error);
@@ -67,7 +72,7 @@ export function SetupCompleteStep() {
       toast.error("Failed to complete church setup. Please try again.");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hydrateUser]);
 
   useEffect(() => {
     confetti({

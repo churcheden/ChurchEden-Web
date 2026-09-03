@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router";
 import { OnboardingProvider } from "./onboarding-context";
+import { OnboardingSetupGuard } from "./onboarding-setup-guard";
 import { WelcomeStep } from "./steps/welcome-step";
 import { SignInStep } from "./steps/signin-step";
 import { VerifyEmailStep } from "./steps/verify-email-step";
@@ -19,16 +20,58 @@ export function OnboardingFlow() {
         <Route path="signin" element={<SignInStep />} />
         <Route path="verify-email" element={<VerifyEmailStep />} />
         
-        {/* 4-Step Church Profile Setup */}
-        <Route path="church-basics" element={<ChurchBasicsStep />} />
-        <Route path="location-contact" element={<LocationContactStep />} />
-        <Route path="service-branding" element={<ServiceBrandingStep />} />
-        <Route path="ministries" element={<MinistriesStep />} />
-        
+        {/* 4-Step Church Profile Setup (guarded: not reachable once onboarded) */}
+        <Route
+          path="church-basics"
+          element={
+            <OnboardingSetupGuard>
+              <ChurchBasicsStep />
+            </OnboardingSetupGuard>
+          }
+        />
+        <Route
+          path="location-contact"
+          element={
+            <OnboardingSetupGuard>
+              <LocationContactStep />
+            </OnboardingSetupGuard>
+          }
+        />
+        <Route
+          path="service-branding"
+          element={
+            <OnboardingSetupGuard>
+              <ServiceBrandingStep />
+            </OnboardingSetupGuard>
+          }
+        />
+        <Route
+          path="ministries"
+          element={
+            <OnboardingSetupGuard>
+              <MinistriesStep />
+            </OnboardingSetupGuard>
+          }
+        />
+
         {/* Backward compatibility redirect for old link */}
-        <Route path="church-profile" element={<Navigate to="/onboarding/church-basics" replace />} />
-        
-        <Route path="complete" element={<SetupCompleteStep />} />
+        <Route
+          path="church-profile"
+          element={
+            <OnboardingSetupGuard>
+              <Navigate to="/onboarding/church-basics" replace />
+            </OnboardingSetupGuard>
+          }
+        />
+
+        <Route
+          path="complete"
+          element={
+            <OnboardingSetupGuard>
+              <SetupCompleteStep />
+            </OnboardingSetupGuard>
+          }
+        />
         <Route path="*" element={<Navigate to="/onboarding/welcome" replace />} />
       </Routes>
     </OnboardingProvider>
