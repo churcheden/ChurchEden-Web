@@ -36,7 +36,8 @@ export async function completeMemberProfile(input: CompleteProfileInput): Promis
 
 export async function getMemberProfile(): Promise<MemberProfile | null> {
   try {
-    return await apiClient.get<MemberProfile>("/members/profile");
+    const res = await apiClient.get<{ status: string; profile: MemberProfile }>("/members/profile");
+    return res?.profile ?? null;
   } catch {
     return null;
   }
@@ -47,7 +48,8 @@ export async function submitJoinRequest(churchId: string): Promise<ChurchMembers
 }
 
 export async function getJoinRequests(filters?: { status?: MembershipStatus; churchId?: string }): Promise<ChurchMembership[]> {
-  return apiClient.get<ChurchMembership[]>("/join-requests", { params: filters });
+  const res = await apiClient.get<{ status: string; requests?: ChurchMembership[] }>("/join-requests", { params: filters });
+  return res?.requests ?? [];
 }
 
 export async function approveJoinRequest(membershipId: string) {
