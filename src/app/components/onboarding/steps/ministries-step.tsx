@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Layers,
   Church,
+  Loader2,
 } from "lucide-react";
 import { OnboardingLayout } from "../onboarding-layout";
 import { EdenButton } from "../eden-button";
@@ -30,11 +31,12 @@ export function MinistriesStep() {
   const navigate = useNavigate();
   const { data, updateData } = useOnboarding();
 
-  const [selectedIds, setSelectedIds] = useState<string[]>(data.selectedMinistryIds ?? []);
-  const [custom, setCustom] = useState<CustomMinistryItem[]>(data.customMinistries ?? []);
-  const [search, setSearch] = useState("");
-  const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+const [selectedIds, setSelectedIds] = useState<string[]>(data.selectedMinistryIds ?? []);
+const [custom, setCustom] = useState<CustomMinistryItem[]>(data.customMinistries ?? []);
+const [search, setSearch] = useState("");
+const [dialog, setDialog] = useState<"create" | "edit" | null>(null);
+const [editingId, setEditingId] = useState<string | null>(null);
+const [submitting, setSubmitting] = useState(false);
 
   const selectedCount = selectedIds.length + custom.length;
 
@@ -74,6 +76,7 @@ export function MinistriesStep() {
       customMinistries: custom,
     });
 
+    setSubmitting(true);
     try {
       await saveStep4({
         ministryIds: selectedIds,
@@ -101,6 +104,8 @@ export function MinistriesStep() {
         }
       }
       toast.error("Failed to save ministries. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -130,10 +135,20 @@ export function MinistriesStep() {
           <EdenButton
             type="submit"
             form="ministries-form"
-            className="bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/20 px-8 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all"
+            disabled={submitting}
+            className="bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/20 px-8 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <span>Complete Setup</span>
-            <CheckCircle2 size={16} />
+            {submitting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <span>Complete Setup</span>
+                <CheckCircle2 size={16} />
+              </>
+            )}
           </EdenButton>
         </>
       }

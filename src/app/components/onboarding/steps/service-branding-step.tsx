@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Heart,
+  Loader2,
 } from "lucide-react";
 import { OnboardingLayout } from "../onboarding-layout";
 import { EdenButton } from "../eden-button";
@@ -51,6 +52,7 @@ export function ServiceBrandingStep() {
   const [logoFile, setLogoFile] = useState<File | null>(data.churchLogo);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddService = () => {
@@ -118,6 +120,7 @@ export function ServiceBrandingStep() {
       time: service.time,
     }));
 
+    setSubmitting(true);
     try {
       await saveStep3(payload, logoFile);
       navigate("/onboarding/ministries");
@@ -133,6 +136,8 @@ export function ServiceBrandingStep() {
         }
       }
       toast.error("Failed to save service & branding. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -162,10 +167,20 @@ export function ServiceBrandingStep() {
           <EdenButton
             type="submit"
             form="service-branding-form"
-            className="bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/20 px-8 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all"
+            disabled={submitting}
+            className="bg-[#1B2A4A] hover:bg-[#0F1729] text-white shadow-md shadow-[#1B2A4A]/20 px-8 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <span>Next</span>
-            <ArrowRight size={14} />
+            {submitting ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <span>Next</span>
+                <ArrowRight size={14} />
+              </>
+            )}
           </EdenButton>
         </>
       }
