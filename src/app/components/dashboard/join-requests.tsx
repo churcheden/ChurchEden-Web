@@ -364,16 +364,18 @@ export function JoinRequestsPage() {
             ) : (
               <div className="space-y-3">
                 <AnimatePresence initial={false}>
-                  {requests.map((request, i) => (
-                    <motion.div
-                      key={request.id}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ delay: i * 0.03 }}
-                      className="rounded-2xl p-4"
-                      style={{ border: `1px solid ${BORDER_SOFT}`, background: "#FFFFFF" }}
-                    >
+                  {requests
+                    .filter((r): r is JoinRequest => Boolean(r && r.id))
+                    .map((request, i) => (
+                      <motion.div
+                        key={request.id || `request-${i}`}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                        className="rounded-2xl p-4"
+                        style={{ border: `1px solid ${BORDER_SOFT}`, background: "#FFFFFF" }}
+                      >
                       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                         {/* Avatar + identity */}
                         <div className="flex items-center gap-3 flex-1 min-w-0">

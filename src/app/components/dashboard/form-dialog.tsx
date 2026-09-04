@@ -80,6 +80,7 @@ export function FormDialog({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.99 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
             className={`relative w-full ${maxWidth} flex flex-col max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3rem)] overflow-hidden rounded-2xl`}
             style={{ background: "#FFFFFF", boxShadow: "0 30px 70px rgba(0,0,0,0.28)", border: "1px solid rgba(255,255,255,0.4)" }}
           >
