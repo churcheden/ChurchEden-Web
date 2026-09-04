@@ -38,7 +38,7 @@ interface JoinRequest {
   role: string;
   rejectionReason: string | null;
   joinedAt: string;
-  church?: { id: string; name: string; logoUrl: string | null } | null;
+  church?: { id: string; name: string; logoUrl: string | null; city?: string | null } | null;
   user?: { id: string; email: string; fullName: string | null } | null;
   memberProfile: {
     profilePhotoUrl?: string | null;
@@ -227,27 +227,36 @@ function MemberDetailModal({
   const { initials, color } = avatarMeta(name);
   const profile = request.memberProfile;
 
+  const email = profile?.contactEmail || request.user?.email || request.email || "Not specified";
+  const phone = profile?.phoneNumber || "Not specified";
+  const city = profile?.city || request.church?.city || "Not specified";
+  const address = profile?.address || "Not specified";
+  const dob = profile?.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString() : "Not specified";
+  const gender = profile?.gender ? profile.gender.toLowerCase().replace(/_/g, " ") : "Not specified";
+  const marital = profile?.maritalStatus ? profile.maritalStatus.toLowerCase().replace(/_/g, " ") : "Not specified";
+  const occupation = profile?.occupation || "Not specified";
+
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md overflow-y-auto"
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          initial={{ opacity: 0, scale: 0.96, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          exit={{ opacity: 0, scale: 0.96, y: 12 }}
           transition={{ type: "spring", duration: 0.35 }}
           className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl border border-stone-200"
           style={{ fontFamily: FONT }}
         >
-          {/* Header Banner */}
-          <div className="relative bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] px-6 pt-6 pb-12 text-white">
+          {/* Seamless Premium Top Header Container */}
+          <div className="bg-[#0F172A] px-6 pt-6 pb-6 text-white relative">
             <button
               onClick={onClose}
               className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white/20"
@@ -256,189 +265,170 @@ function MemberDetailModal({
             </button>
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#C8860A]">
               <UserCheck size={14} />
-              Join Request Profile Details
+              Join Request Details
             </div>
-            <h2 className="mt-1 text-xl font-bold text-white">{name}</h2>
-            <p className="text-xs text-slate-300">Complete membership profile scan</p>
+            
+            {/* Integrated Avatar & User Title Header */}
+            <div className="mt-4 flex items-center gap-4">
+              {profile?.profilePhotoUrl ? (
+                <img
+                  src={profile.profilePhotoUrl}
+                  alt={name}
+                  className="h-16 w-16 rounded-2xl border-2 border-white/20 object-cover shadow-md flex-shrink-0"
+                />
+              ) : (
+                <div
+                  className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-white/20 text-xl font-black text-white shadow-md flex-shrink-0"
+                  style={{ background: color }}
+                >
+                  {initials}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl font-bold text-white leading-tight truncate">{name}</h2>
+                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                  <StatusPill status={request.status} />
+                  <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300">
+                    {request.role || "MEMBER"}
+                  </span>
+                  {request.isBanned && (
+                    <span className="rounded-full bg-red-500/20 px-2.5 py-0.5 text-[11px] font-bold text-red-300 border border-red-500/40">
+                      BANNED
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Profile Card Main Body */}
-          <div className="px-6 -mt-8 pb-6">
-            <div className="flex items-end justify-between mb-4">
-              <div className="flex items-end gap-3.5">
-                {profile?.profilePhotoUrl ? (
-                  <img
-                    src={profile.profilePhotoUrl}
-                    alt={name}
-                    className="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-md"
-                  />
-                ) : (
-                  <div
-                    className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white text-2xl font-black text-white shadow-md"
-                    style={{ background: color }}
-                  >
-                    {initials}
+          {/* Structured Profile Fields Grid Body */}
+          <div className="p-6 space-y-3.5 text-xs max-h-[60vh] overflow-y-auto">
+            {/* Contact Information */}
+            <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
+                <Mail size={12} /> Contact Information
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <span className="text-stone-400 block text-[10.5px]">Email Address</span>
+                  <span className="font-semibold text-stone-800 break-all">{email}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block text-[10.5px]">Phone Number</span>
+                  <span className="font-semibold text-stone-800">{phone}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block text-[10.5px]">City / Location</span>
+                  <span className="font-semibold text-stone-800">{city}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block text-[10.5px]">Residential Address</span>
+                  <span className="font-semibold text-stone-800 truncate block">{address}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Personal Profile Details */}
+            <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
+                <User size={12} /> Personal Profile
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div>
+                  <span className="text-stone-400 block text-[10.5px]">Date of Birth</span>
+                  <span className="font-semibold text-stone-800">{dob}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block text-[10.5px]">Gender</span>
+                  <span className="font-semibold text-stone-800 capitalize">{gender}</span>
+                </div>
+                <div>
+                  <span className="text-stone-400 block text-[10.5px]">Marital Status</span>
+                  <span className="font-semibold text-stone-800 capitalize">{marital}</span>
+                </div>
+                <div className="col-span-2 sm:col-span-3">
+                  <span className="text-stone-400 block text-[10.5px]">Occupation / Profession</span>
+                  <span className="font-semibold text-stone-800">{occupation}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Church & Request Context */}
+            <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
+                <Building size={12} /> Membership & Request Info
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {request.church?.name && (
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">Church</span>
+                    <span className="font-semibold text-stone-800">{request.church.name}</span>
                   </div>
                 )}
                 <div>
-                  <h3 className="text-base font-bold text-[#1A1A1A] leading-tight">{name}</h3>
-                  <div className="mt-1 flex items-center gap-2">
-                    <StatusPill status={request.status} />
-                    {request.isBanned && (
-                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">
-                        BANNED
-                      </span>
-                    )}
-                  </div>
+                  <span className="text-stone-400 block text-[10.5px]">Assigned Role</span>
+                  <span className="font-semibold text-stone-800">{request.role || "Member"}</span>
+                </div>
+                <div className="col-span-1 sm:col-span-2">
+                  <span className="text-stone-400 block text-[10.5px]">Requested On</span>
+                  <span className="font-semibold text-stone-800">
+                    {request.joinedAt ? new Date(request.joinedAt).toLocaleString() : "Recently"} ({relativeTime(request.joinedAt)})
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Structured Profile Fields Grid */}
-            <div className="space-y-3.5 text-xs max-h-[60vh] overflow-y-auto pr-1">
-              {/* Contact Information */}
-              <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
-                  <Mail size={12} /> Contact Information
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <span className="text-stone-400 block text-[10.5px]">Email Address</span>
-                    <span className="font-semibold text-stone-800 break-all">
-                      {profile?.contactEmail || request.email || request.user?.email || "Not specified"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-stone-400 block text-[10.5px]">Phone Number</span>
-                    <span className="font-semibold text-stone-800">
-                      {profile?.phoneNumber || "Not specified"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-stone-400 block text-[10.5px]">City / Location</span>
-                    <span className="font-semibold text-stone-800">
-                      {profile?.city || "Not specified"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-stone-400 block text-[10.5px]">Residential Address</span>
-                    <span className="font-semibold text-stone-800 truncate block">
-                      {profile?.address || "Not specified"}
-                    </span>
-                  </div>
-                </div>
+            {/* Rejection / Ban Notes */}
+            {request.rejectionReason && (
+              <div className="rounded-2xl border border-red-200 bg-red-50/60 p-3 text-red-800 text-xs">
+                <span className="font-bold">Rejection Reason: </span>
+                {request.rejectionReason}
               </div>
+            )}
+          </div>
 
-              {/* Personal Profile Details */}
-              <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
-                  <User size={12} /> Personal Profile
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  <div>
-                    <span className="text-stone-400 block text-[10.5px]">Date of Birth</span>
-                    <span className="font-semibold text-stone-800">
-                      {profile?.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString() : "Not specified"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-stone-400 block text-[10.5px]">Gender</span>
-                    <span className="font-semibold text-stone-800 capitalize">
-                      {profile?.gender ? profile.gender.toLowerCase().replace(/_/g, " ") : "Not specified"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-stone-400 block text-[10.5px]">Marital Status</span>
-                    <span className="font-semibold text-stone-800 capitalize">
-                      {profile?.maritalStatus ? profile.maritalStatus.toLowerCase().replace(/_/g, " ") : "Not specified"}
-                    </span>
-                  </div>
-                  <div className="col-span-2 sm:col-span-3">
-                    <span className="text-stone-400 block text-[10.5px]">Occupation / Profession</span>
-                    <span className="font-semibold text-stone-800">
-                      {profile?.occupation || "Not specified"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Church & Request Context */}
-              <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
-                  <Building size={12} /> Membership & Request Info
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {request.church?.name && (
-                    <div>
-                      <span className="text-stone-400 block text-[10.5px]">Church</span>
-                      <span className="font-semibold text-stone-800">{request.church.name}</span>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-stone-400 block text-[10.5px]">Assigned Role</span>
-                    <span className="font-semibold text-stone-800">{request.role || "Member"}</span>
-                  </div>
-                  <div className="col-span-1 sm:col-span-2">
-                    <span className="text-stone-400 block text-[10.5px]">Requested On</span>
-                    <span className="font-semibold text-stone-800">
-                      {request.joinedAt ? new Date(request.joinedAt).toLocaleString() : "Recently"} ({relativeTime(request.joinedAt)})
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Rejection / Ban Notes */}
-              {request.rejectionReason && (
-                <div className="rounded-2xl border border-red-200 bg-red-50/60 p-3 text-red-800 text-xs">
-                  <span className="font-bold">Rejection Reason: </span>
-                  {request.rejectionReason}
-                </div>
-              )}
-            </div>
-
-            {/* Actions Bar */}
-            <div className="mt-5 flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-stone-100">
-              {request.status === "PENDING" && (
-                <>
-                  <button
-                    onClick={() => { onClose(); onApprove(request); }}
-                    disabled={actingId !== null}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#C8860A] to-[#D99A20] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:opacity-95"
-                  >
-                    <Check size={14} /> Approve
-                  </button>
-                  <button
-                    onClick={() => { onClose(); onReject(request); }}
-                    disabled={actingId !== null}
-                    className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
-                  >
-                    <X size={14} /> Reject
-                  </button>
-                  <button
-                    onClick={() => { onClose(); onBan(request); }}
-                    disabled={actingId !== null}
-                    className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
-                  >
-                    <Ban size={14} /> Ban
-                  </button>
-                </>
-              )}
-              {request.status !== "PENDING" && request.isBanned && (
+          {/* Actions Bar */}
+          <div className="p-4 bg-stone-50 border-t border-stone-100 flex flex-wrap items-center justify-end gap-2">
+            {request.status === "PENDING" && (
+              <>
                 <button
-                  onClick={() => { onClose(); onUnban(request); }}
+                  onClick={() => { onClose(); onApprove(request); }}
                   disabled={actingId !== null}
-                  className="flex items-center gap-1.5 rounded-xl border border-green-500 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 hover:bg-green-100"
+                  className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#C8860A] to-[#D99A20] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:opacity-95"
                 >
-                  <Check size={14} /> Unban
+                  <Check size={14} /> Approve
                 </button>
-              )}
+                <button
+                  onClick={() => { onClose(); onReject(request); }}
+                  disabled={actingId !== null}
+                  className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+                >
+                  <X size={14} /> Reject
+                </button>
+                <button
+                  onClick={() => { onClose(); onBan(request); }}
+                  disabled={actingId !== null}
+                  className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
+                >
+                  <Ban size={14} /> Ban
+                </button>
+              </>
+            )}
+            {request.status !== "PENDING" && request.isBanned && (
               <button
-                onClick={onClose}
-                className="rounded-xl border border-stone-300 bg-stone-100 px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-200"
+                onClick={() => { onClose(); onUnban(request); }}
+                disabled={actingId !== null}
+                className="flex items-center gap-1.5 rounded-xl border border-green-500 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 hover:bg-green-100"
               >
-                Close
+                <Check size={14} /> Unban
               </button>
-            </div>
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-xl border border-stone-300 bg-white px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-100"
+            >
+              Close
+            </button>
           </div>
         </motion.div>
       </motion.div>

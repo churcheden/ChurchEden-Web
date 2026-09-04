@@ -20,14 +20,19 @@ export function AuthCallback() {
 
     const complete = async () => {
       try {
+        let authedUser = null;
         if (accessToken) {
-          await setSessionFromTokens(accessToken);
+          authedUser = await setSessionFromTokens(accessToken);
         } else {
-          await hydrateUser();
+          authedUser = await hydrateUser();
         }
 
-        // Redirect based on profile status or default to dashboard
-        if (profileComplete === "false") {
+        const isUserAlreadySetup =
+          !!authedUser?.church ||
+          (authedUser?.memberships && authedUser.memberships.length > 0);
+
+        // Fast redirect: if user already has a church/membership or profile is complete, go directly to dashboard
+        if (profileComplete === "false" && !isUserAlreadySetup) {
           navigate("/onboarding/church-basics", { replace: true });
         } else {
           navigate("/dashboard", { replace: true });

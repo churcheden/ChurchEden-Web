@@ -53,17 +53,25 @@ Backend also sets httpOnly cookies (`token`, `refreshToken`) on register/login. 
 
 Known auth error codes: `USER_EXISTS`, `UNAUTHORIZED`, `EMAIL_NOT_VERIFIED`, `MISSING_OTP`, `INVALID_OTP`, `OTP_EXPIRED`, `PageNotFound`.
 
-### Auth API reference
+### Subscription Plan Tiers Schema
+
+Backend plan tiers:
+- `EXPLORER` (formerly Free) — Free tier
+- `PLUS` (formerly Pro) — Plus tier
+- `CORE` (formerly Max) — Core tier
+
+### Backend API Reference
 
 Base: `{VITE_API_BASE_URL}` (e.g. `https://api.churcheden.app/api/v1`)
 
+#### Auth & Session Endpoints
 | Method | Path | Body | Notes |
 |---|---|---|---|
 | POST | `/auth/register` | `{ email, password }` | Min 8 char password. Returns tokens + `requiresVerification: true` |
 | POST | `/auth/verify-email` | `{ email, otp }` | 6-digit OTP from email |
 | POST | `/auth/resend-verification` | — | Requires Bearer token |
 | POST | `/auth/login` | `{ email, password }` | 403 `EMAIL_NOT_VERIFIED` if unverified |
-| GET | `/auth/me` | — | Bearer token required |
+| GET | `/auth/me` | — | Bearer token required. Returns `profileComplete` & `user` |
 | POST | `/auth/refresh` | `{ refreshToken? }` | Returns new token pair |
 | POST | `/auth/logout` | — | Bearer token required |
 | POST | `/auth/forgot-password` | `{ email }` | Silent success even if email unknown |
@@ -71,6 +79,22 @@ Base: `{VITE_API_BASE_URL}` (e.g. `https://api.churcheden.app/api/v1`)
 | GET | `/auth/google/url` | — | Returns `{ status: "success", url }` |
 | GET | `/auth/google` | — | Browser redirect (OAuth start) |
 | GET | `/auth/google/callback` | — | Server-side; redirects to frontend |
+
+#### Member Profile Endpoints
+| Method | Path | Body / Params | Notes |
+|---|---|---|---|
+| GET | `/members/profile` | — | Returns user's `MemberProfile` object |
+| POST | `/members/profile/complete` | Multipart / JSON fields | Sets `fullName`, `contactEmail`, `phoneNumber`, `city`, `address`, `dateOfBirth`, `gender`, `maritalStatus`, `occupation`, `profilePhoto` |
+
+#### Join Requests Endpoints
+| Method | Path | Body / Params | Notes |
+|---|---|---|---|
+| GET | `/join-requests` | `?status=PENDING\|APPROVED\|REJECTED` | Returns array of join requests with populated `memberProfile`, `user`, and `church` |
+| POST | `/join-requests` | `{ churchId }` | Submit new join request |
+| POST | `/join-requests/approve` | `{ membershipId }` | Approve member request |
+| POST | `/join-requests/reject` | `{ membershipId, rejectionReason? }` | Reject member request with reason |
+| POST | `/join-requests/ban` | `{ membershipId, banReason? }` | Ban user from church with reason |
+| POST | `/join-requests/unban` | `{ membershipId }` | Unban user |
 
 ### Success response shapes
 

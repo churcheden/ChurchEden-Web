@@ -22,8 +22,8 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>;
   verifyEmail: (email: string, otp: string) => Promise<void>;
   resendVerification: () => Promise<void>;
-  setSessionFromTokens: (accessToken?: string, refreshToken?: string) => Promise<void>;
-  hydrateUser: () => Promise<boolean>;
+  setSessionFromTokens: (accessToken?: string, refreshToken?: string) => Promise<AuthUser | null>;
+  hydrateUser: () => Promise<AuthUser | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -32,21 +32,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const hydrateUser = useCallback(async (): Promise<boolean> => {
+  const hydrateUser = useCallback(async (): Promise<AuthUser | null> => {
     try {
       const response = await authApi.getCurrentUser();
       if (response && response.user) {
-        setUser({
+        const authedUser: AuthUser = {
           ...response.user,
           accountType: response.accountType ?? response.user.accountType ?? "ADMIN",
-        });
-        return true;
+        };
+        setUser(authedUser);
+        return authedUser;
       }
       setUser(null);
-      return false;
+      return null;
     } catch {
       setUser(null);
-      return false;
+      return null;
     }
   }, []);
 
@@ -101,8 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const setSessionFromTokens = useCallback(
-    async (_accessToken?: string, _refreshToken?: string) => {
-      await hydrateUser();
+    async (_accessToken?: string, _refreshToken?: string): Promise<AuthUser | null> => {
+      return await hydrateUser();
     },
     [hydrateUser],
   );

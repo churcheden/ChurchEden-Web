@@ -117,6 +117,13 @@ saved first) and returns `STEP_1_REQUIRED` / `STEP_2_REQUIRED` /
 `STEP_3_REQUIRED` (or `INCOMPLETE_ONBOARDING` from `/complete`); the UI redirects
 to the corresponding step when one of those is returned.
 
+## Pricing Plan Tiers
+
+ChurchEden defines three plan tiers:
+- **Explorer** (`EXPLORER`) — For churches getting started (£0 / Forever free)
+- **Plus** (`PLUS`) — For growing churches (£49.99/mo or £39.99/mo annually)
+- **Core** (`CORE`) — For established churches & larger ministries (£99.99/mo or £79.99/mo annually)
+
 ## Backend Integration
 
-Auth is wired to the live Railway API at `https://api.churcheden.app/api/v1`. See **`guidelines/MASTER-INTEGRATION-PROMPT.md`** for the full API reference.
+Auth is wired to the live Railway API at `https://api.churcheden.app/api/v1`. See [MASTER-INTEGRATION-PROMPT.md](file:///c:/Users/SIMPATY%20SOLUTIONS/ChurchEden-Web/guidelines/MASTER-INTEGRATION-PROMPT.md) for full API reference.

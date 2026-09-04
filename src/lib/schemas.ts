@@ -1,6 +1,9 @@
 // src/lib/schemas.ts
 import { z } from 'zod';
 
+export const planTierSchema = z.enum(['EXPLORER', 'PLUS', 'CORE']);
+export const subscriptionPlanSchema = planTierSchema;
+
 export const registerSchema = z.object({
   email: z.string().email('Enter a valid email'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
