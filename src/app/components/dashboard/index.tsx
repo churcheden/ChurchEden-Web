@@ -34,11 +34,11 @@ function readPersistedPage(): Page {
   return "Overview";
 }
 
-function OverviewContent({ onViewAllPending }: { onViewAllPending: () => void }) {
+function OverviewContent({ onViewAllPending, onViewMembers }: { onViewAllPending: () => void; onViewMembers: () => void }) {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="p-4 lg:p-6 max-w-screen-2xl mx-auto">
-        <StatCards />
+        <StatCards onPendingClick={onViewAllPending} onMembersClick={onViewMembers} />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5 mt-4 lg:mt-5">
           <GivingOverview />
           <AttendanceTracker />
@@ -111,7 +111,12 @@ export function Dashboard() {
           breadcrumb={currentPage !== "Overview" ? currentPage : undefined}
         />
 
-        {currentPage === "Overview" && <OverviewContent onViewAllPending={() => setCurrentPage("Join Requests")} />}
+        {currentPage === "Overview" && (
+          <OverviewContent
+            onViewAllPending={() => setCurrentPage("Join Requests")}
+            onViewMembers={() => setCurrentPage("Members")}
+          />
+        )}
 
         {currentPage === "Members" && (
           <div className="flex-1 flex flex-col overflow-hidden" style={{ background: "#F5F4EF" }}>

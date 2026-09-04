@@ -35,17 +35,14 @@ export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProp
   const activeItem = activePage ?? internalActive;
 
   const navSections = useMemo(() => {
-    // SuperAdmins (web users) have accountType === 'ADMIN' and never have
-    // memberships[]. isChurchAdmin() checks memberships, so it always returns
-    // false for SuperAdmins. Use accountType directly instead.
-    const isSuperAdmin = user?.accountType === 'ADMIN';
+    // ChurchEden-Web is the Super Admin portal, so Join Requests should always be available.
     return [
       {
         title: "MAIN",
         items: [
           { icon: Home, label: "Overview" },
           { icon: Users, label: "Members" },
-          ...(isSuperAdmin ? [{ icon: UserCheck, label: "Join Requests" }] : []),
+          { icon: UserCheck, label: "Join Requests" },
           { icon: Calendar, label: "Events" },
           { icon: Megaphone, label: "Announcements" },
         ],

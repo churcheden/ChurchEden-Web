@@ -87,7 +87,7 @@ const cards = [
   },
 ];
 
-function StatCard({ card, delay }: { card: typeof cards[0]; delay: number }) {
+function StatCard({ card, delay, onClick }: { card: typeof cards[0]; delay: number; onClick?: () => void }) {
   const count = useCountUp(card.value, 1500 + delay * 100);
 
   return (
@@ -96,7 +96,8 @@ function StatCard({ card, delay }: { card: typeof cards[0]; delay: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: delay * 0.08 }}
       whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(0,0,0,0.1)" }}
-      className="rounded-2xl p-5 flex flex-col gap-3 cursor-default"
+      onClick={onClick}
+      className={`rounded-2xl p-5 flex flex-col gap-3 ${onClick ? "cursor-pointer" : "cursor-default"}`}
       style={{
         background: "#FFFFFF",
         boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
@@ -131,12 +132,18 @@ function StatCard({ card, delay }: { card: typeof cards[0]; delay: number }) {
   );
 }
 
-export function StatCards() {
+export function StatCards({ onPendingClick, onMembersClick }: { onPendingClick?: () => void; onMembersClick?: () => void }) {
   return (
     <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-      {cards.map((card, i) => (
-        <StatCard key={card.label} card={card} delay={i} />
-      ))}
+      {cards.map((card, i) => {
+        const handleClick =
+          card.label === "Pending Approvals"
+            ? onPendingClick
+            : card.label === "Total Members" || card.label === "Verified Members"
+            ? onMembersClick
+            : undefined;
+        return <StatCard key={card.label} card={card} delay={i} onClick={handleClick} />;
+      })}
     </div>
   );
 }

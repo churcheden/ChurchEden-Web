@@ -36,7 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authApi.getCurrentUser();
       if (response && response.user) {
-        setUser(response.user);
+        setUser({
+          ...response.user,
+          accountType: response.accountType ?? response.user.accountType ?? "ADMIN",
+        });
         return true;
       }
       setUser(null);
@@ -74,7 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = useCallback(async (email: string, password: string) => {
     const response = await authApi.register(email, password);
     if (response.user) {
-      setUser(response.user);
+      setUser({
+        ...response.user,
+        accountType: response.accountType ?? response.user.accountType ?? "ADMIN",
+      });
     }
     return { requiresVerification: response.requiresVerification };
   }, []);
@@ -82,7 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     const response = await authApi.login(email, password);
     if (response.user) {
-      setUser(response.user);
+      setUser({
+        ...response.user,
+        accountType: response.accountType ?? response.user.accountType ?? "ADMIN",
+      });
     }
   }, []);
 

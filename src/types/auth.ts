@@ -51,6 +51,7 @@ export interface RegisterResponse {
   requiresVerification: boolean;
   accessToken: string;
   refreshToken: string;
+  accountType?: "ADMIN" | "MEMBER";
   user: AuthUser;
 }
 
@@ -59,6 +60,7 @@ export interface LoginResponse {
   message: string;
   accessToken: string;
   refreshToken: string;
+  accountType?: "ADMIN" | "MEMBER";
   user: AuthUser;
 }
 
