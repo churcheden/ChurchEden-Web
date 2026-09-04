@@ -7,7 +7,6 @@ import {
   UserCheck, UserCog, X, LogOut, Crown, ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/app/auth/auth-context";
-import { isChurchAdmin } from "@/lib/memberships";
 import justLogoTransparent from "@/assets/Just-logo-transparent.png";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -36,14 +35,17 @@ export function Sidebar({ isOpen, onClose, activePage, onNavigate }: SidebarProp
   const activeItem = activePage ?? internalActive;
 
   const navSections = useMemo(() => {
-    const isAdmin = isChurchAdmin(user?.memberships);
+    // SuperAdmins (web users) have accountType === 'ADMIN' and never have
+    // memberships[]. isChurchAdmin() checks memberships, so it always returns
+    // false for SuperAdmins. Use accountType directly instead.
+    const isSuperAdmin = user?.accountType === 'ADMIN';
     return [
       {
         title: "MAIN",
         items: [
           { icon: Home, label: "Overview" },
           { icon: Users, label: "Members" },
-          ...(isAdmin ? [{ icon: UserCheck, label: "Join Requests" }] : []),
+          ...(isSuperAdmin ? [{ icon: UserCheck, label: "Join Requests" }] : []),
           { icon: Calendar, label: "Events" },
           { icon: Megaphone, label: "Announcements" },
         ],
