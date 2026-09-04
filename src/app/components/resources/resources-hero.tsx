@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { BookOpen, Search } from "lucide-react";
+import resourcesHeroImg from "@/assets/resources-hero.jpg";
 
 interface ResourcesHeroProps {
   searchQuery: string;
@@ -70,23 +71,23 @@ export function ResourcesHero({ searchQuery, onSearchChange }: ResourcesHeroProp
             </motion.div>
           </div>
 
-          {/* RIGHT COLUMN — Large Rounded Workspace Image */}
+          {/* RIGHT COLUMN — Ultra-modern Church Management Workspace Image */}
           <div className="lg:col-span-6">
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="relative overflow-hidden rounded-2xl lg:rounded-3xl border border-[#0F1E32]/10 shadow-xl bg-white"
+              className="relative overflow-hidden rounded-2xl lg:rounded-3xl border border-[#0F1E32]/10 shadow-2xl bg-white"
               style={{
-                boxShadow: "0 20px 50px -15px rgba(15, 23, 42, 0.10)",
+                boxShadow: "0 25px 60px -15px rgba(15, 23, 42, 0.15)",
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1200&q=80"
-                alt="Church leader working thoughtfully in warm ministry office setting with digital tablet"
+                src={resourcesHeroImg}
+                alt="Modern church leader working on church management software dashboard in sunlit office workspace"
                 loading="eager"
                 decoding="async"
-                className="w-full h-[320px] sm:h-[400px] lg:h-[420px] object-cover object-center"
+                className="w-full h-[340px] sm:h-[420px] lg:h-[450px] object-cover object-center"
               />
             </motion.div>
           </div>

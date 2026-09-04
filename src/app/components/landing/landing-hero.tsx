@@ -64,8 +64,7 @@ export function LandingHero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.05 }}
-              className="mb-6 flex flex-col font-serif leading-[1.12] tracking-tight"
-              style={{ fontFamily: "'Fraunces', 'Playfair Display', Georgia, serif" }}
+              className="mb-6 flex flex-col leading-[1.1] font-sans tracking-tight"
             >
               <span className="text-4xl font-extrabold text-[#0F172A] sm:text-5xl lg:text-[3.25rem]">
                 Faithful Stewardship in Ministry.
