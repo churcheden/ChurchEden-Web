@@ -67,6 +67,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, []);
 
+  // Active session preservation:
+  // 1. Refresh token silently every 8 minutes while user is logged in
+  // 2. Refresh token silently when user returns / switches back to the tab
+  useEffect(() => {
+    if (!user) return;
+
+    const silentRefresh = async () => {
+      try {
+        await authApi.refreshTokens();
+      } catch {
+        // Silent catch — request retries handle 401 via mutex
+      }
+    };
+
+    // Heartbeat every 8 minutes (480,000 ms)
+    const interval = setInterval(() => {
+      void silentRefresh();
+    }, 8 * 60 * 1000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void silentRefresh();
+      }
+    };
+
+    window.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [user]);
+
   const setSessionFromTokens = useCallback(
     async (_accessToken?: string, _refreshToken?: string) => {
       await hydrateUser();
