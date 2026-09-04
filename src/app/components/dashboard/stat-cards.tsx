@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Users, CheckCircle, Clock, CalendarDays } from "lucide-react";
 import { motion } from "motion/react";
+import { apiRequest } from "@/lib/apiClient";
 
 function useCountUp(target: number, duration = 1600) {
   const [value, setValue] = useState(0);
@@ -44,50 +45,16 @@ const sparkPatterns = [
   [0.3, 0.5, 0.4, 0.6, 0.7, 0.5, 0.8, 0.6, 0.7, 0.5, 0.8, 0.6, 0.7, 0.9],
 ];
 
-const cards = [
-  {
-    icon: Users,
-    label: "Total Members",
-    value: 1248,
-    sub: "+34 this month",
-    subColor: "#0A7A4A",
-    pattern: sparkPatterns[0],
-    iconBg: "rgba(45,27,105,0.1)",
-    iconColor: "#2D1B69",
-  },
-  {
-    icon: CheckCircle,
-    label: "Verified Members",
-    value: 1102,
-    sub: "88% of total",
-    subColor: "#0A7A4A",
-    pattern: sparkPatterns[1],
-    iconBg: "rgba(10,74,58,0.1)",
-    iconColor: "#0A4A3A",
-  },
-  {
-    icon: Clock,
-    label: "Pending Approvals",
-    value: 46,
-    sub: "Tap to review",
-    subColor: "#C8860A",
-    pattern: sparkPatterns[2],
-    iconBg: "rgba(200,134,10,0.1)",
-    iconColor: "#C8860A",
-  },
-  {
-    icon: CalendarDays,
-    label: "Upcoming Events",
-    value: 7,
-    sub: "Next: Sunday Service",
-    subColor: "#6B7280",
-    pattern: sparkPatterns[3],
-    iconBg: "rgba(26,5,51,0.08)",
-    iconColor: "#1A0533",
-  },
-];
-
-function StatCard({ card, delay, onClick }: { card: typeof cards[0]; delay: number; onClick?: () => void }) {
+function StatCard({ card, delay, onClick }: { card: {
+  icon: React.ElementType;
+  label: string;
+  value: number;
+  sub: string;
+  subColor: string;
+  pattern: number[];
+  iconBg: string;
+  iconColor: string;
+}; delay: number; onClick?: () => void }) {
   const count = useCountUp(card.value, 1500 + delay * 100);
 
   return (
@@ -133,6 +100,61 @@ function StatCard({ card, delay, onClick }: { card: typeof cards[0]; delay: numb
 }
 
 export function StatCards({ onPendingClick, onMembersClick }: { onPendingClick?: () => void; onMembersClick?: () => void }) {
+  const [pendingCount, setPendingCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    apiRequest<{ status: string; requests: unknown[] }>("/join-requests?status=PENDING", { auth: true })
+      .then((res) => {
+        if (Array.isArray(res.requests)) {
+          setPendingCount(res.requests.length);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const cards = [
+    {
+      icon: Users,
+      label: "Total Members",
+      value: 1248,
+      sub: "+34 this month",
+      subColor: "#0A7A4A",
+      pattern: sparkPatterns[0],
+      iconBg: "rgba(45,27,105,0.1)",
+      iconColor: "#2D1B69",
+    },
+    {
+      icon: CheckCircle,
+      label: "Verified Members",
+      value: 1102,
+      sub: "88% of total",
+      subColor: "#0A7A4A",
+      pattern: sparkPatterns[1],
+      iconBg: "rgba(10,74,58,0.1)",
+      iconColor: "#0A4A3A",
+    },
+    {
+      icon: Clock,
+      label: "Pending Approvals",
+      value: pendingCount ?? 0,
+      sub: "Tap to review",
+      subColor: "#C8860A",
+      pattern: sparkPatterns[2],
+      iconBg: "rgba(200,134,10,0.1)",
+      iconColor: "#C8860A",
+    },
+    {
+      icon: CalendarDays,
+      label: "Upcoming Events",
+      value: 7,
+      sub: "Next: Sunday Service",
+      subColor: "#6B7280",
+      pattern: sparkPatterns[3],
+      iconBg: "rgba(26,5,51,0.08)",
+      iconColor: "#1A0533",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
       {cards.map((card, i) => {

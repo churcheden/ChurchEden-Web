@@ -29,12 +29,13 @@ type Status = "PENDING" | "APPROVED" | "REJECTED";
 
 interface JoinRequest {
   id: string;
+  email?: string;
   status: Status;
   role: string;
   rejectionReason: string | null;
   joinedAt: string;
-  church: { id: string; name: string; logoUrl: string | null };
-  user: { id: string; email: string; fullName: string | null };
+  church?: { id: string; name: string; logoUrl: string | null } | null;
+  user?: { id: string; email: string; fullName: string | null } | null;
   memberProfile: {
     profilePhotoUrl: string | null;
     fullName: string;
@@ -85,7 +86,9 @@ function avatarMeta(name: string) {
 }
 
 function relativeTime(iso: string): string {
+  if (!iso) return "recently";
   const date = new Date(iso);
+  if (isNaN(date.getTime())) return "recently";
   const diffMinutes = Math.floor((Date.now() - date.getTime()) / 60000);
   if (diffMinutes < 1) return "just now";
   if (diffMinutes < 60) return `${diffMinutes}m ago`;
@@ -299,9 +302,9 @@ export function JoinRequestsPage() {
   };
 
   const memberName = (request: JoinRequest) =>
-    request.user.fullName || request.memberProfile?.fullName || "Church member";
+    request.memberProfile?.fullName || request.user?.fullName || request.email || "Church member";
 
-  const singleChurch = new Set(requests.map((r) => r.church.id)).size <= 1;
+  const singleChurch = new Set(requests.map((r) => r.church?.id).filter(Boolean)).size <= 1;
 
   return (
     <div className="flex-1 overflow-y-auto" style={{ background: SURFACE }}>
@@ -347,7 +350,7 @@ export function JoinRequestsPage() {
           <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: `1px solid ${BORDER_SOFT}` }}>
             <Users size={13} color={MUTED} />
             <span style={{ fontSize: "12px", fontWeight: 600, color: MUTED, fontFamily: FONT, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              {FILTERS.find((f) => f.key === filter)?.label} requests
+              {FILTERS.find((f) => f.key === filter)?.label} requests ({requests.length})
             </span>
           </div>
 
@@ -399,7 +402,7 @@ export function JoinRequestsPage() {
                               {filter === "PENDING" && <StatusPill status={request.status} />}
                             </div>
                             <div style={{ fontSize: "12px", color: MUTED, fontFamily: FONT }} className="truncate">
-                              {request.memberProfile?.contactEmail || request.user.email}
+                              {request.memberProfile?.contactEmail || request.email || request.user?.email || "No email available"}
                             </div>
                             <div className="flex items-center gap-3 flex-wrap" style={{ fontSize: "11.5px", color: MUTED, fontFamily: FONT, marginTop: "2px" }}>
                               {request.memberProfile?.city && (
@@ -418,7 +421,7 @@ export function JoinRequestsPage() {
                                 <CalendarDays size={11} color={MUTED} />
                                 Requested {relativeTime(request.joinedAt)}
                               </span>
-                              {!singleChurch && <span className="truncate">· {request.church.name}</span>}
+                              {!singleChurch && request.church?.name && <span className="truncate">· {request.church.name}</span>}
                             </div>
                           </div>
                         </div>
