@@ -1,8 +1,11 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import aboutHeroImg from "@/assets/about-hero.jpg";
 
 export function AboutHero() {
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const handleScrollToStory = () => {
     const el = document.getElementById("our-story");
     if (el) {
@@ -11,17 +14,34 @@ export function AboutHero() {
   };
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#07182F] min-h-[560px] lg:min-h-[640px] flex items-center">
-      {/* Background Image positioned on right */}
+    <section className="relative w-full overflow-hidden min-h-[560px] lg:min-h-[640px] flex items-center bg-[#0C1524]">
+      {/* Low-weight blurred background placeholder layer — prevents solid blue block before load */}
+      <div
+        className="absolute inset-0 z-0 transition-opacity duration-1000"
+        style={{
+          background: "radial-gradient(circle at 70% 50%, rgba(30, 45, 66, 0.6) 0%, rgba(12, 21, 36, 1) 100%)",
+          filter: "blur(20px)",
+          transform: "scale(1.1)",
+        }}
+      />
+
+      {/* Background Image positioned on right with smooth fade-in */}
       <div className="absolute inset-0 z-0">
         <img
           src={aboutHeroImg}
           alt="Diverse church community gathering in warm fellowship"
-          className="h-full w-full object-cover object-center lg:object-right"
+          loading="eager"
+          decoding="async"
+          onLoad={() => setIsLoaded(true)}
+          className={`h-full w-full object-cover object-center lg:object-right transition-opacity duration-700 ease-out ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
         />
-        {/* Cinematic gradient overlay matching spec */}
+        {/* Subtle smear gradient overlay — fades in gracefully as image loads */}
         <div
-          className="absolute inset-0"
+          className={`absolute inset-0 transition-opacity duration-700 ease-out ${
+            isLoaded ? "opacity-100" : "opacity-30"
+          }`}
           style={{
             background: `linear-gradient(
               90deg,

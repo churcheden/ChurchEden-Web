@@ -64,10 +64,11 @@ export function LandingHero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.05 }}
-              className="mb-6 flex flex-col leading-[1.1]"
+              className="mb-6 flex flex-col font-serif leading-[1.12] tracking-tight"
+              style={{ fontFamily: "'Fraunces', 'Playfair Display', Georgia, serif" }}
             >
               <span className="text-4xl font-extrabold text-[#0F172A] sm:text-5xl lg:text-[3.25rem]">
-                Faith You Can Track.
+                Faithful Stewardship in Ministry.
               </span>
               <span className="text-4xl font-extrabold text-[#D4A017] sm:text-5xl lg:text-[3.25rem]">
                 Growth You Can Trust.

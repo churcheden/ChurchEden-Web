@@ -2,10 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Ban,
+  Building,
   CalendarDays,
   Check,
+  Eye,
+  Mail,
   MapPin,
   Phone,
+  User,
   UserCheck,
   Users,
   X,
@@ -37,11 +41,16 @@ interface JoinRequest {
   church?: { id: string; name: string; logoUrl: string | null } | null;
   user?: { id: string; email: string; fullName: string | null } | null;
   memberProfile: {
-    profilePhotoUrl: string | null;
-    fullName: string;
-    contactEmail: string;
-    phoneNumber: string;
-    city: string;
+    profilePhotoUrl?: string | null;
+    fullName?: string | null;
+    contactEmail?: string | null;
+    phoneNumber?: string | null;
+    city?: string | null;
+    address?: string | null;
+    dateOfBirth?: string | null;
+    gender?: string | null;
+    maritalStatus?: string | null;
+    occupation?: string | null;
   } | null;
   isBanned?: boolean;
 }
@@ -191,10 +200,257 @@ function StatusPill({ status }: { status: Status }) {
   );
 }
 
+// ─── User Profile Detail Modal ───────────────────────────────────────────────
+function MemberDetailModal({
+  request,
+  onClose,
+  onApprove,
+  onReject,
+  onBan,
+  onUnban,
+  actingId,
+}: {
+  request: JoinRequest | null;
+  onClose: () => void;
+  onApprove: (r: JoinRequest) => void;
+  onReject: (r: JoinRequest) => void;
+  onBan: (r: JoinRequest) => void;
+  onUnban: (r: JoinRequest) => void;
+  actingId: string | null;
+}) {
+  if (!request) return null;
+  const name =
+    request.memberProfile?.fullName ||
+    request.user?.fullName ||
+    request.email ||
+    "Church Member";
+  const { initials, color } = avatarMeta(name);
+  const profile = request.memberProfile;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md overflow-y-auto"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 15 }}
+          transition={{ type: "spring", duration: 0.35 }}
+          className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl border border-stone-200"
+          style={{ fontFamily: FONT }}
+        >
+          {/* Header Banner */}
+          <div className="relative bg-gradient-to-r from-[#0F172A] via-[#1E293B] to-[#0F172A] px-6 pt-6 pb-12 text-white">
+            <button
+              onClick={onClose}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white/20"
+            >
+              <X size={16} />
+            </button>
+            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#C8860A]">
+              <UserCheck size={14} />
+              Join Request Profile Details
+            </div>
+            <h2 className="mt-1 text-xl font-bold text-white">{name}</h2>
+            <p className="text-xs text-slate-300">Complete membership profile scan</p>
+          </div>
+
+          {/* Profile Card Main Body */}
+          <div className="px-6 -mt-8 pb-6">
+            <div className="flex items-end justify-between mb-4">
+              <div className="flex items-end gap-3.5">
+                {profile?.profilePhotoUrl ? (
+                  <img
+                    src={profile.profilePhotoUrl}
+                    alt={name}
+                    className="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-md"
+                  />
+                ) : (
+                  <div
+                    className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white text-2xl font-black text-white shadow-md"
+                    style={{ background: color }}
+                  >
+                    {initials}
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-base font-bold text-[#1A1A1A] leading-tight">{name}</h3>
+                  <div className="mt-1 flex items-center gap-2">
+                    <StatusPill status={request.status} />
+                    {request.isBanned && (
+                      <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">
+                        BANNED
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Structured Profile Fields Grid */}
+            <div className="space-y-3.5 text-xs max-h-[60vh] overflow-y-auto pr-1">
+              {/* Contact Information */}
+              <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
+                  <Mail size={12} /> Contact Information
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">Email Address</span>
+                    <span className="font-semibold text-stone-800 break-all">
+                      {profile?.contactEmail || request.email || request.user?.email || "Not specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">Phone Number</span>
+                    <span className="font-semibold text-stone-800">
+                      {profile?.phoneNumber || "Not specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">City / Location</span>
+                    <span className="font-semibold text-stone-800">
+                      {profile?.city || "Not specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">Residential Address</span>
+                    <span className="font-semibold text-stone-800 truncate block">
+                      {profile?.address || "Not specified"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Profile Details */}
+              <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
+                  <User size={12} /> Personal Profile
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">Date of Birth</span>
+                    <span className="font-semibold text-stone-800">
+                      {profile?.dateOfBirth ? new Date(profile.dateOfBirth).toLocaleDateString() : "Not specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">Gender</span>
+                    <span className="font-semibold text-stone-800 capitalize">
+                      {profile?.gender ? profile.gender.toLowerCase().replace(/_/g, " ") : "Not specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">Marital Status</span>
+                    <span className="font-semibold text-stone-800 capitalize">
+                      {profile?.maritalStatus ? profile.maritalStatus.toLowerCase().replace(/_/g, " ") : "Not specified"}
+                    </span>
+                  </div>
+                  <div className="col-span-2 sm:col-span-3">
+                    <span className="text-stone-400 block text-[10.5px]">Occupation / Profession</span>
+                    <span className="font-semibold text-stone-800">
+                      {profile?.occupation || "Not specified"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Church & Request Context */}
+              <div className="rounded-2xl border border-stone-200/80 bg-stone-50/70 p-3.5 space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#C8860A] flex items-center gap-1.5">
+                  <Building size={12} /> Membership & Request Info
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {request.church?.name && (
+                    <div>
+                      <span className="text-stone-400 block text-[10.5px]">Church</span>
+                      <span className="font-semibold text-stone-800">{request.church.name}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-stone-400 block text-[10.5px]">Assigned Role</span>
+                    <span className="font-semibold text-stone-800">{request.role || "Member"}</span>
+                  </div>
+                  <div className="col-span-1 sm:col-span-2">
+                    <span className="text-stone-400 block text-[10.5px]">Requested On</span>
+                    <span className="font-semibold text-stone-800">
+                      {request.joinedAt ? new Date(request.joinedAt).toLocaleString() : "Recently"} ({relativeTime(request.joinedAt)})
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rejection / Ban Notes */}
+              {request.rejectionReason && (
+                <div className="rounded-2xl border border-red-200 bg-red-50/60 p-3 text-red-800 text-xs">
+                  <span className="font-bold">Rejection Reason: </span>
+                  {request.rejectionReason}
+                </div>
+              )}
+            </div>
+
+            {/* Actions Bar */}
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-stone-100">
+              {request.status === "PENDING" && (
+                <>
+                  <button
+                    onClick={() => { onClose(); onApprove(request); }}
+                    disabled={actingId !== null}
+                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[#C8860A] to-[#D99A20] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:opacity-95"
+                  >
+                    <Check size={14} /> Approve
+                  </button>
+                  <button
+                    onClick={() => { onClose(); onReject(request); }}
+                    disabled={actingId !== null}
+                    className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+                  >
+                    <X size={14} /> Reject
+                  </button>
+                  <button
+                    onClick={() => { onClose(); onBan(request); }}
+                    disabled={actingId !== null}
+                    className="flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-700 hover:bg-red-50"
+                  >
+                    <Ban size={14} /> Ban
+                  </button>
+                </>
+              )}
+              {request.status !== "PENDING" && request.isBanned && (
+                <button
+                  onClick={() => { onClose(); onUnban(request); }}
+                  disabled={actingId !== null}
+                  className="flex items-center gap-1.5 rounded-xl border border-green-500 bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 hover:bg-green-100"
+                >
+                  <Check size={14} /> Unban
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="rounded-xl border border-stone-300 bg-stone-100 px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-200"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 // ─── Main page ───────────────────────────────────────────────────────────────
 export function JoinRequestsPage() {
   const [filter, setFilter] = useState<Status>("PENDING");
   const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<JoinRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
@@ -377,17 +633,20 @@ export function JoinRequestsPage() {
                         style={{ border: `1px solid ${BORDER_SOFT}`, background: "#FFFFFF" }}
                       >
                       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                        {/* Avatar + identity */}
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Avatar + identity (clickable to view complete details) */}
+                        <div
+                          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group"
+                          onClick={() => setSelectedRequest(request)}
+                        >
                           {request.memberProfile?.profilePhotoUrl ? (
                             <img
                               src={request.memberProfile.profilePhotoUrl}
                               alt={memberName(request)}
-                              className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                              className="w-10 h-10 rounded-full object-cover flex-shrink-0 border border-amber-500/20 group-hover:border-amber-500 transition-colors"
                             />
                           ) : (
                             <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105"
                               style={{ background: avatarMeta(memberName(request)).color }}
                             >
                               <span style={{ fontSize: "13px", fontWeight: 700, color: "#FFFFFF", fontFamily: FONT }}>
@@ -398,7 +657,7 @@ export function JoinRequestsPage() {
 
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="truncate" style={{ fontSize: "13.5px", fontWeight: 600, color: INK, fontFamily: FONT }}>
+                              <span className="truncate group-hover:text-[#C8860A] transition-colors" style={{ fontSize: "13.5px", fontWeight: 600, color: INK, fontFamily: FONT }}>
                                 {memberName(request)}
                               </span>
                               {filter === "PENDING" && <StatusPill status={request.status} />}
@@ -424,6 +683,13 @@ export function JoinRequestsPage() {
                                 Requested {relativeTime(request.joinedAt)}
                               </span>
                               {!singleChurch && request.church?.name && <span className="truncate">· {request.church.name}</span>}
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setSelectedRequest(request); }}
+                                className="inline-flex items-center gap-1 font-semibold text-[#C8860A] hover:underline ml-1"
+                              >
+                                <Eye size={11} /> View details
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -606,6 +872,17 @@ export function JoinRequestsPage() {
           </div>
         </div>
       </FormDialog>
+
+      {/* Member Details Modal Pop-Up */}
+      <MemberDetailModal
+        request={selectedRequest}
+        onClose={() => setSelectedRequest(null)}
+        onApprove={(r) => void handleApprove(r)}
+        onReject={(r) => { setRejectTarget(r); setRejectReason(""); }}
+        onBan={(r) => { setBanTarget(r); setBanReason(""); }}
+        onUnban={(r) => void handleUnban(r)}
+        actingId={actingId}
+      />
 
       <Toaster
         position="bottom-right"

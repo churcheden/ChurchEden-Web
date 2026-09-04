@@ -236,7 +236,7 @@ export function PricingPage() {
           {/* ── Pricing cards grid ── */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8 items-start">
 
-            {/* ─── FREE ─── */}
+            {/* ─── EXPLORER (formerly Free) ─── */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -253,7 +253,7 @@ export function PricingPage() {
 
               {/* Plan name */}
               <h2 style={{ fontSize: "20px", fontWeight: 700, color: NAVY, marginBottom: "4px" }}>
-                Free
+                Explorer
               </h2>
               {/* Tagline */}
               <p style={{ fontSize: "12.5px", color: "#9CA3AF", marginBottom: "18px" }}>
@@ -274,7 +274,7 @@ export function PricingPage() {
                 className="w-full rounded-xl py-2 text-sm font-semibold transition-all duration-150 hover:bg-slate-50 active:scale-95 mb-5"
                 style={{ border: "1.5px solid #D1D5DB", color: NAVY, background: "transparent" }}
               >
-                Get Started Free
+                Get Started with Explorer
               </button>
 
               {/* Features */}
@@ -283,7 +283,7 @@ export function PricingPage() {
               </ul>
             </motion.div>
 
-            {/* ─── PRO (highlighted) ─── */}
+            {/* ─── PLUS (formerly Pro, highlighted) ─── */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -309,7 +309,7 @@ export function PricingPage() {
               <PlanIcon variant="flower" />
 
               <h2 style={{ fontSize: "20px", fontWeight: 700, color: NAVY, marginBottom: "4px" }}>
-                Pro
+                Plus
               </h2>
               <p style={{ fontSize: "12.5px", color: "#9CA3AF", marginBottom: "18px" }}>
                 For growing churches
@@ -329,19 +329,19 @@ export function PricingPage() {
                 className="w-full rounded-xl py-2.5 text-sm font-semibold transition-all duration-150 hover:opacity-90 active:scale-95 mb-5"
                 style={{ background: AMBER2, color: "#FFFFFF", border: "none" }}
               >
-                Start Pro Trial
+                Start Plus Trial
               </button>
 
               {/* Section label */}
               <p style={{ fontSize: "12.5px", fontWeight: 700, color: NAVY, marginBottom: "10px" }}>
-                Everything in Free, plus:
+                Everything in Explorer, plus:
               </p>
               <ul className="flex flex-col gap-2">
                 {PRO_FEATURES.map((f) => <FeatureCheck key={f} text={f} />)}
               </ul>
             </motion.div>
 
-            {/* ─── MAX ─── */}
+            {/* ─── CORE (formerly Max) ─── */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -357,7 +357,7 @@ export function PricingPage() {
               <PlanIcon variant="tree" />
 
               <h2 style={{ fontSize: "20px", fontWeight: 700, color: NAVY, marginBottom: "4px" }}>
-                Max
+                Core
               </h2>
               <p style={{ fontSize: "12.5px", color: "#9CA3AF", marginBottom: "18px" }}>
                 For established churches and larger ministries
@@ -375,11 +375,11 @@ export function PricingPage() {
                 className="w-full rounded-xl py-2 text-sm font-semibold transition-all duration-150 hover:bg-slate-50 active:scale-95 mb-5"
                 style={{ border: "1.5px solid #D1D5DB", color: NAVY, background: "transparent" }}
               >
-                Start Max Trial
+                Start Core Trial
               </button>
 
               <p style={{ fontSize: "12.5px", fontWeight: 700, color: NAVY, marginBottom: "10px" }}>
-                Everything in Pro, plus:
+                Everything in Plus, plus:
               </p>
               <ul className="flex flex-col gap-2">
                 {MAX_FEATURES.map((f) => <FeatureCheck key={f} text={f} />)}

@@ -82,8 +82,10 @@ export function ResourcesHero({ searchQuery, onSearchChange }: ResourcesHeroProp
               }}
             >
               <img
-                src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80"
-                alt="Modern warm church workspace with laptop dashboard and coffee"
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=1200&q=80"
+                alt="Church leader working thoughtfully in warm ministry office setting with digital tablet"
+                loading="eager"
+                decoding="async"
                 className="w-full h-[320px] sm:h-[400px] lg:h-[420px] object-cover object-center"
               />
             </motion.div>
